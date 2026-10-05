@@ -1,0 +1,177 @@
+@page
+@model SAWP.Web.Pages.Teacher.Attendance.SummaryModel
+@{
+    ViewData["Title"] = "Báo cáo chuyên cần tháng";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Teacher/Index">Trang chủ GVCN</a> &rsaquo; 
+            <a asp-page="/Teacher/Attendance/Index">Điểm danh</a> &rsaquo; 
+            <span>Báo cáo chuyên cần tháng</span>
+        </div>
+        <h1 class="page-title">Báo cáo chuyên cần &ndash; Lớp @Model.HomeroomClass?.Name</h1>
+        <p class="text-muted">Tổng hợp tình hình chuyên cần và tỷ lệ đi học theo tháng (UC-28)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Teacher/Attendance/Index" class="btn btn-secondary">
+            <icon name="calendar-check" /> Sổ điểm danh hàng ngày
+        </a>
+        <a asp-page="/Teacher/Leave/Index" class="btn btn-secondary">
+            <icon name="file-text" /> Duyệt đơn nghỉ học
+        </a>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">
+            <icon name="printer" /> In báo cáo
+        </button>
+    </div>
+</div>
+
+<!-- Month / Year Selector -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-4 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 160px;">
+                <label class="form-label text-xs mb-1">Chọn tháng</label>
+                <select asp-for="Month" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">Tháng @m</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 140px;">
+                <label class="form-label text-xs mb-1">Năm</label>
+                <select asp-for="Year" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int y = 2024; y <= 2027; y++)
+                    {
+                        <option value="@y">Năm @y</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <icon name="search" /> Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Key Stat Stickers -->
+<div class="grid grid-4 gap-4 mb-6">
+    <div class="stat-sticker">
+        <div class="stat-icon bg-lavender-subtle">
+            <icon name="users" class="text-primary" />
+        </div>
+        <div>
+            <div class="stat-label">Sĩ số lớp</div>
+            <div class="stat-value">@Model.StudentSummaries.Count <span class="text-xs font-normal">HS</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-mint-subtle">
+            <icon name="percent" class="text-mint" />
+        </div>
+        <div>
+            <div class="stat-label">Chuyên cần trung bình</div>
+            <div class="stat-value">@Model.OverallClassAttendanceRate%</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-peach-subtle">
+            <icon name="clock" class="text-warning" />
+        </div>
+        <div>
+            <div class="stat-label">Vắng có phép</div>
+            <div class="stat-value">@Model.TotalExcusedAbsences <span class="text-xs font-normal">lượt</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-danger-subtle">
+            <icon name="alert-circle" class="text-danger" />
+        </div>
+        <div>
+            <div class="stat-label">Vắng không phép</div>
+            <div class="stat-value">@Model.TotalUnexcusedAbsences <span class="text-xs font-normal">lượt</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance summary table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="table" class="text-primary" /> Bảng chi tiết chuyên cần Tháng @Model.Month/@Model.Year
+        </h2>
+        <span class="badge badge-subtle">Số ngày học ghi nhận: @Model.TotalSchoolDays ngày</span>
+    </div>
+
+    @if (!Model.StudentSummaries.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Lớp chưa có học sinh nào được ghi nhận.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">STT</th>
+                        <th>Mã học sinh</th>
+                        <th>Họ và tên</th>
+                        <th>Giới tính</th>
+                        <th class="text-center">Có mặt</th>
+                        <th class="text-center">Có phép</th>
+                        <th class="text-center">Không phép</th>
+                        <th class="text-center">Đi muộn</th>
+                        <th class="text-center">Tỷ lệ</th>
+                        <th class="text-center">Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int stt = 1; }
+                    @foreach (var s in Model.StudentSummaries)
+                    {
+                        <tr>
+                            <td class="text-muted font-mono">@(stt++)</td>
+                            <td class="font-mono font-bold text-primary">@s.StudentCode</td>
+                            <td class="font-semibold">@s.FullName</td>
+                            <td class="text-muted text-sm">@s.Gender</td>
+                            <td class="text-center font-bold text-mint">@s.PresentDays</td>
+                            <td class="text-center font-semibold text-warning">@s.ExcusedAbsenceDays</td>
+                            <td class="text-center font-bold @(s.UnexcusedAbsenceDays > 0 ? "text-danger" : "text-muted")">
+                                @s.UnexcusedAbsenceDays
+                            </td>
+                            <td class="text-center text-secondary">@s.LateDays</td>
+                            <td class="text-center font-mono font-bold">
+                                @s.AttendanceRate%
+                            </td>
+                            <td class="text-center">
+                                @if (s.Rating == "Tốt")
+                                {
+                                    <span class="badge badge-success"><icon name="check" /> Tốt</span>
+                                }
+                                else if (s.Rating == "Khá")
+                                {
+                                    <span class="badge badge-warning">Khá</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger"><icon name="alert-triangle" /> Cần lưu ý</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

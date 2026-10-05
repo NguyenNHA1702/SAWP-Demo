@@ -1,0 +1,128 @@
+@page
+@model SAWP.Web.Pages.Admin.Settings.IndexModel
+@{
+    ViewData["Title"] = "Cấu hình thông số hệ thống";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Cấu hình hệ thống</span>
+        </div>
+        <h1 class="page-title">Cấu hình thông số vận hành hệ thống</h1>
+        <p class="text-muted">Tùy biến các ngưỡng quy tắc nghiệp vụ, thời gian chốt và thông tin nhà trường (UC-59)</p>
+    </div>
+</div>
+
+<form method="post" asp-page-handler="Save">
+    @Html.AntiForgeryToken()
+
+    <div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+        <div>
+            <!-- Group 1: Business Rules -->
+            <div class="app-card mb-6">
+                <div class="card-header bg-lavender-subtle">
+                    <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                        <icon name="sliders" class="text-primary" /> Ngưỡng quy tắc nghiệp vụ (Business Rules)
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            Hạn mức ngày nghỉ do GVCN phê duyệt (Leave.MaxDaysForTeacher)
+                        </label>
+                        <div class="d-flex align-center gap-2">
+                            <input type="number" name="settings[Leave.MaxDaysForTeacher]" class="form-control" style="max-width: 120px;" value="@(Model.AllSettings.FirstOrDefault(s => s.Key == "Leave.MaxDaysForTeacher")?.Value ?? "3")" min="1" max="10" required />
+                            <span class="text-sm font-semibold">ngày</span>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            Đơn xin nghỉ có thời gian lớn hơn ngưỡng này sẽ được hệ thống <strong>tự động chuyển tiếp lên Ban Giám hiệu</strong> phê duyệt (BR-25, BR-41).
+                        </small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            Thời hạn GVCN được phép tự điều chỉnh điểm danh (Attendance.TeacherEditWindowHours)
+                        </label>
+                        <div class="d-flex align-center gap-2">
+                            <input type="number" name="settings[Attendance.TeacherEditWindowHours]" class="form-control" style="max-width: 120px;" value="@(Model.AllSettings.FirstOrDefault(s => s.Key == "Attendance.TeacherEditWindowHours")?.Value ?? "24")" min="1" max="72" required />
+                            <span class="text-sm font-semibold">giờ</span>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            Sau thời hạn này, sổ điểm danh sẽ bị khóa (BR-22). Mọi điều chỉnh sau đó bắt buộc phải thông qua Giáo vụ (UC-22).
+                        </small>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="form-label">
+                            Giờ chốt suất ăn bán trú buổi sáng (Lunch.DefaultCutoffTime)
+                        </label>
+                        <div class="d-flex align-center gap-2">
+                            <input type="time" name="settings[Lunch.DefaultCutoffTime]" class="form-control" style="max-width: 140px;" value="@(Model.AllSettings.FirstOrDefault(s => s.Key == "Lunch.DefaultCutoffTime")?.Value ?? "08:00")" required />
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            Thời điểm hệ thống khóa chức năng tự đăng ký hoặc tự hủy suất ăn của phụ huynh (BR-28).
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group 2: School Information -->
+            <div class="app-card mb-6">
+                <div class="card-header bg-light">
+                    <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                        <icon name="home" class="text-secondary" /> Thông tin đơn vị trường học
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-4">
+                        <label class="form-label">Tên trường tiểu học (School.Name)</label>
+                        <input type="text" name="settings[School.Name]" class="form-control" value="@(Model.AllSettings.FirstOrDefault(s => s.Key == "School.Name")?.Value ?? "Trường Tiểu học Thực nghiệm SAWP")" required />
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="form-label">Số điện thoại liên hệ nhà trường (School.Phone)</label>
+                        <input type="text" name="settings[School.Phone]" class="form-control" value="@(Model.AllSettings.FirstOrDefault(s => s.Key == "School.Phone")?.Value ?? "024.3823.4567")" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-end gap-3 pt-2">
+                <button type="submit" class="btn btn-candy">
+                    <icon name="check" /> Lưu cấu hình hệ thống (MSG44)
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <!-- Info Card -->
+            <div class="app-card mb-4">
+                <div class="card-header bg-light">
+                    <h3 class="card-title text-sm font-semibold">Tác động của cấu hình</h3>
+                </div>
+                <div class="card-body text-sm text-secondary">
+                    <p class="mb-2">
+                        Các thông số cấu hình tại trang này sẽ có hiệu lực <strong>ngay lập tức</strong> đối với toàn bộ luồng quy trình trên nền tảng SAWP:
+                    </p>
+                    <ul class="pl-4 mb-0" style="line-height: 1.7;">
+                        <li>Kiểm tra phân luồng đơn xin nghỉ học phụ huynh gửi.</li>
+                        <li>Khóa sổ và mở khóa điểm danh giáo viên.</li>
+                        <li>Chốt danh sách báo ăn của bếp bán trú hàng ngày.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <div class="card-header bg-light">
+                    <h3 class="card-title text-sm font-semibold">Nhật ký kiểm toán (BR-49)</h3>
+                </div>
+                <div class="card-body text-sm text-secondary">
+                    <p class="mb-0">
+                        Mọi thao tác thay đổi giá trị cấu hình hệ thống đều được tự động lưu vào <a asp-page="/Admin/Audit/Index">Nhật ký kiểm toán</a> phục vụ mục đích bảo mật và giám sát kỹ thuật.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

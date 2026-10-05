@@ -1,0 +1,133 @@
+@page
+@model AssignStudentsModel
+@{
+    ViewData["Title"] = $"Phân lớp học sinh: Lớp {Model.Class.Name}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Classes/Index" style="font-size:0.85rem; color:var(--fg-muted);">Lớp học</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Phân lớp học sinh</span>
+        </div>
+        <h1 class="page-title">Phân lớp Học sinh: Lớp @Model.Class.Name (UC-16)</h1>
+        <div class="page-subtitle">Sắp xếp học sinh vào lớp học, kiểm soát định mức sĩ số tối đa (BR-15, BR-17)</div>
+    </div>
+</div>
+
+<!-- Class Capacity Bar -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <div style="font-size: 1.15rem; font-weight: 700;">
+            Sĩ số hiện tại: <span style="color: var(--accent-violet);">@Model.CurrentRoster.Count</span> / @Model.Class.Capacity học sinh
+        </div>
+        <div>
+            @if (Model.CurrentRoster.Count >= Model.Class.Capacity)
+            {
+                <span class="badge badge-danger">Lớp đã đủ sĩ số (MSG15)</span>
+            }
+            else
+            {
+                <span class="badge badge-mint">Còn trống @(Model.Class.Capacity - Model.CurrentRoster.Count) chỗ</span>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Current Roster in Class -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="users" shape="squircle" tone="violet" size="md" /> Danh sách học sinh trong Lớp @Model.Class.Name
+            </h3>
+            <span class="badge badge-violet">@Model.CurrentRoster.Count HS</span>
+        </div>
+
+        @if (Model.CurrentRoster.Any())
+        {
+            <div class="table-container">
+                <table class="table-pop">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã HS</th>
+                            <th>Họ và tên</th>
+                            <th style="text-align: right;">Bỏ khỏi lớp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ca in Model.CurrentRoster)
+                        {
+                            <tr>
+                                <td><strong>@(ca.RollNumber?.ToString("D2") ?? "-")</strong></td>
+                                <td><code>@ca.Student.StudentCode</code></td>
+                                <td><strong>@ca.Student.FullName</strong></td>
+                                <td style="text-align: right;">
+                                    <form method="post" asp-page-handler="Remove" asp-route-assignmentId="@ca.Id" onsubmit="return confirm('Bạn có chắc muốn rút học sinh này khỏi lớp?');" style="margin: 0;">
+                                        <button type="submit" class="btn btn-sm btn-ghost" title="Rút khỏi lớp">
+                                            <icon name="trash" size="sm" tone="danger" />
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Lớp chưa có học sinh nào</div>
+                <div class="empty-desc">Chọn học sinh từ cột bên phải để thêm vào lớp này.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Available Unassigned Students -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="plus" shape="squircle" tone="mint" size="md" /> Học sinh chưa phân lớp trong năm học
+            </h3>
+            <span class="badge badge-mint">@Model.UnassignedStudents.Count HS</span>
+        </div>
+
+        @if (Model.UnassignedStudents.Any())
+        {
+            <form method="post" asp-page-handler="Assign">
+                <div style="max-height: 400px; overflow-y: auto; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); padding: 0.5rem; margin-bottom: 1.25rem;">
+                    @foreach (var s in Model.UnassignedStudents)
+                    {
+                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border-bottom: 1px solid var(--border-light); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <input type="checkbox" name="SelectedStudentIds" value="@s.Id" style="width: 18px; height: 18px;" />
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.95rem;">@s.FullName</div>
+                                    <div style="font-size: 0.8rem; color: var(--fg-muted);">
+                                        <code>@s.StudentCode</code> · @(s.Gender == Gender.Male ? "Nam" : "Nữ") · @Model.FormatDate(s.DateOfBirth)
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-candy btn-lg" style="width: 100%;">
+                    <icon name="plus" size="md" /> Thêm các học sinh đã chọn vào Lớp @Model.Class.Name (MSG16)
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="check-circle" tone="mint" size="xl" class="empty-icon" />
+                <div class="empty-title">Không còn học sinh chưa phân lớp</div>
+                <div class="empty-desc">Tất cả học sinh trúng tuyển đã được sắp xếp vào các lớp học.</div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,222 @@
+@page
+@model SAWP.Web.Pages.Board.Announcements.IndexModel
+@{
+    ViewData["Title"] = "Quản lý thông báo nhà trường";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Board/Index">Ban Giám hiệu</a> &rsaquo; 
+            <span>Thông báo nhà trường</span>
+        </div>
+        <h1 class="page-title">Quản lý thông báo nhà trường</h1>
+        <p class="text-muted">Soạn thảo, ghim và phát hành các thông báo điều hành và thông tin chung đến phụ huynh và giáo viên (UC-47)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Board/Index" class="btn btn-secondary">
+            <icon name="arrow-left" /> Bảng điều khiển BGH
+        </a>
+        <button type="button" class="btn btn-candy" onclick="openCreateModal()">
+            <icon name="plus" /> Đăng thông báo mới
+        </button>
+    </div>
+</div>
+
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="bell" class="text-primary" /> Danh sách thông báo đã đăng (@Model.Announcements.Count)
+        </h2>
+    </div>
+
+    @if (!Model.Announcements.Any())
+    {
+        <div class="card-body text-center py-8">
+            <div class="empty-state-icon mb-3">
+                <icon name="bell-off" style="width: 48px; height: 48px;" class="text-muted" />
+            </div>
+            <h3 class="text-base font-semibold mb-1">Chưa có thông báo nào</h3>
+            <p class="text-muted text-sm mb-4">Hãy đăng thông báo đầu tiên cho năm học 2026-2027.</p>
+            <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                <icon name="plus" /> Đăng thông báo ngay
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>Tiêu đề thông báo</th>
+                        <th>Đối tượng nhận</th>
+                        <th>Người đăng</th>
+                        <th>Ngày đăng</th>
+                        <th>Hạn hiển thị</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Announcements)
+                    {
+                        <tr style="@(item.IsPinned ? "background-color: #FAF5FF;" : "")">
+                            <td class="text-center">
+                                @if (item.IsPinned)
+                                {
+                                    <span title="Thông báo được ghim"><icon name="pin" class="text-primary" /></span>
+                                }
+                            </td>
+                            <td>
+                                <div class="font-bold text-base text-primary">@item.Title</div>
+                                <div class="text-xs text-muted text-truncate" style="max-width: 320px;">
+                                    @item.Content
+                                </div>
+                            </td>
+                            <td>
+                                @switch (item.TargetAudience)
+                                {
+                                    case SAWP.Web.Domain.AnnouncementAudience.All:
+                                        <span class="badge badge-primary"><icon name="users" /> Toàn trường</span>
+                                        break;
+                                    case SAWP.Web.Domain.AnnouncementAudience.Parents:
+                                        <span class="badge badge-candy"><icon name="heart" /> Phụ huynh</span>
+                                        break;
+                                    case SAWP.Web.Domain.AnnouncementAudience.Teachers:
+                                        <span class="badge badge-purple"><icon name="book-open" /> Giáo viên</span>
+                                        break;
+                                    default:
+                                        <span class="badge badge-secondary">@item.TargetAudience</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-sm">
+                                @(item.PublishedByUser?.FullName ?? "Ban Giám hiệu")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @item.PublishedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(item.ExpireAt.HasValue ? item.ExpireAt.Value.ToString("dd/MM/yyyy") : "Vô thời hạn")
+                            </td>
+                            <td class="text-center">
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge badge-success"><icon name="eye" /> Đang hiển thị</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary"><icon name="eye-off" /> Đã ẩn</span>
+                                }
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-1">
+                                    <button type="button" class="btn btn-secondary btn-xs" onclick="openEditModal(@item.Id, '@Html.Raw(item.Title.Replace("'", "\\'"))', '@Html.Raw(item.Content.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))', '@item.TargetAudience', @item.IsPinned.ToString().ToLower(), '@(item.ExpireAt.HasValue ? item.ExpireAt.Value.ToString("yyyy-MM-dd") : "")')">
+                                        <icon name="edit-2" /> Sửa
+                                    </button>
+                                    <form method="post" asp-page-handler="ToggleActive" asp-route-id="@item.Id" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-ghost btn-xs" title="@(item.IsActive ? "Ẩn thông báo" : "Hiện lại thông báo")">
+                                            <icon name="@(item.IsActive ? "eye-off" : "eye")" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Create / Edit Announcement -->
+<div id="announcementModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 580px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="bell" class="text-primary" /> <span id="modalTitle">Soạn thông báo nhà trường</span>
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="modalId" />
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Tiêu đề thông báo <span class="text-danger">*</span></label>
+                    <input type="text" name="title" id="modalInputTitle" class="form-control" placeholder="Ví dụ: Kế hoạch tổ chức Lễ Khai giảng năm học 2026-2027..." required />
+                </div>
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Đối tượng nhận thông báo</label>
+                        <select name="targetAudience" id="modalTargetAudience" class="form-control form-control-sm">
+                            <option value="All">Toàn trường (Tất cả mọi người)</option>
+                            <option value="Parents">Phụ huynh học sinh</option>
+                            <option value="Teachers">Giáo viên chủ nhiệm & Bộ môn</option>
+                            <option value="Staff">Cán bộ công nhân viên</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Hạn hiển thị (tùy chọn)</label>
+                        <input type="date" name="expireAt" id="modalExpireAt" class="form-control form-control-sm" />
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Nội dung chi tiết <span class="text-danger">*</span></label>
+                    <textarea name="content" id="modalContent" class="form-control" rows="5" placeholder="Nhập đầy đủ nội dung thông báo, thời gian, địa điểm, hướng dẫn..." required></textarea>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="d-flex align-center gap-2 text-sm cursor-pointer mb-0">
+                        <input type="checkbox" name="isPinned" id="modalIsPinned" value="true" />
+                        <span class="font-semibold text-primary">Ghim thông báo này lên đầu danh sách</span>
+                    </label>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <icon name="send" /> Đăng & Phát hành
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreateModal() {
+            document.getElementById('modalId').value = 0;
+            document.getElementById('modalInputTitle').value = '';
+            document.getElementById('modalContent').value = '';
+            document.getElementById('modalTargetAudience').value = 'All';
+            document.getElementById('modalExpireAt').value = '';
+            document.getElementById('modalIsPinned').checked = false;
+            document.getElementById('modalTitle').textContent = 'Soạn thông báo nhà trường';
+            document.getElementById('announcementModal').style.display = 'flex';
+        }
+
+        function openEditModal(id, title, content, audience, isPinned, expireAt) {
+            document.getElementById('modalId').value = id;
+            document.getElementById('modalInputTitle').value = title;
+            document.getElementById('modalContent').value = content;
+            document.getElementById('modalTargetAudience').value = audience || 'All';
+            document.getElementById('modalExpireAt').value = expireAt || '';
+            document.getElementById('modalIsPinned').checked = isPinned === true;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa thông báo';
+            document.getElementById('announcementModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('announcementModal').style.display = 'none';
+        }
+    </script>
+}

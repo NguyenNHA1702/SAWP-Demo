@@ -1,0 +1,190 @@
+@page
+@model SAWP.Web.Pages.Admin.ReferenceData.IndexModel
+@{
+    ViewData["Title"] = "Dữ liệu danh mục hệ thống";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Dữ liệu danh mục</span>
+        </div>
+        <h1 class="page-title">Quản lý dữ liệu danh mục & tham chiếu</h1>
+        <p class="text-muted">Cấu hình danh mục loại giấy tờ, quan hệ người giám hộ và lý do điều chỉnh (UC-56)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-candy" onclick="openItemModal(0, '@Model.SelectedCategory', '', '', @(Model.Items.Count + 1), true)">
+            <icon name="plus" /> Thêm bản ghi mới
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-2" style="grid-template-columns: 1fr 3fr; gap: var(--space-6); align-items: start;">
+    <!-- Left Category Navigation -->
+    <div class="app-card">
+        <div class="card-header bg-light">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="folder" class="text-primary" /> Nhóm danh mục
+            </h2>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group">
+                @foreach (var cat in Model.Categories)
+                {
+                    var isSelected = cat == Model.SelectedCategory;
+                    string catDisplay = cat switch
+                    {
+                        "DocumentType" => "Loại giấy tờ & hồ sơ",
+                        "Relationship" => "Mối quan hệ người giám hộ",
+                        "CancelReason" => "Lý do hủy suất ăn",
+                        _ => cat
+                    };
+                    <a asp-page="/Admin/ReferenceData/Index" asp-route-selectedCategory="@cat" class="p-3 d-flex justify-between align-center border-bottom text-decoration-none @(isSelected ? "bg-lavender-subtle font-bold" : "")" style="color: inherit;">
+                        <div>
+                            <div class="text-sm text-primary">@catDisplay</div>
+                            <div class="text-xs text-muted font-mono">@cat</div>
+                        </div>
+                        <icon name="chevron-right" size="xs" class="@(isSelected ? "text-primary" : "text-muted")" />
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Items List -->
+    <div class="app-card">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2 text-primary">
+                <icon name="list" /> Danh sách phần tử: @Model.SelectedCategory (@Model.Items.Count phần tử)
+            </h2>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="card-body text-center py-6 text-muted">
+                Chưa có phần tử nào trong danh mục này.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-pop">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">STT</th>
+                            <th>Mã code</th>
+                            <th>Tên hiển thị</th>
+                            <th class="text-center">Thứ tự</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int stt = 1; }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-muted font-mono">@(stt++)</td>
+                                <td class="font-mono font-bold text-primary text-sm">@item.Code</td>
+                                <td class="font-semibold text-sm">@item.Name</td>
+                                <td class="text-center font-mono text-sm">@item.SortOrder</td>
+                                <td class="text-center">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge badge-success"><icon name="check" /> Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary"><icon name="slash" /> Tạm khóa</span>
+                                    }
+                                </td>
+                                <td class="text-right">
+                                    <div class="d-flex justify-end gap-1">
+                                        <button type="button" class="btn btn-secondary btn-xs" onclick="openItemModal(@item.Id, '@item.Category', '@item.Code', '@Html.Raw(item.Name.Replace("'", "\\'"))', @item.SortOrder, @item.IsActive.ToString().ToLower())">
+                                            <icon name="edit-2" /> Sửa
+                                        </button>
+                                        <form method="post" asp-page-handler="ToggleActive" asp-route-id="@item.Id" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-ghost btn-xs">
+                                                <icon name="@(item.IsActive ? "eye-off" : "eye")" />
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Add / Edit Reference Item -->
+<div id="itemModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 480px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="edit-2" class="text-primary" /> <span id="modalTitle">Thiết lập danh mục</span>
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeItemModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="SaveItem">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="modalItemId" />
+                <input type="hidden" name="category" id="modalCategory" value="@Model.SelectedCategory" />
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Mã code <span class="text-danger">*</span></label>
+                    <input type="text" name="code" id="modalCode" class="form-control form-control-sm" placeholder="VD: GXN_HOC" required />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Tên hiển thị <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="modalName" class="form-control form-control-sm" placeholder="VD: Giấy xác nhận học sinh" required />
+                </div>
+
+                <div class="grid grid-2 gap-3 mb-4">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Thứ tự hiển thị</label>
+                        <input type="number" name="sortOrder" id="modalSortOrder" class="form-control form-control-sm" value="1" />
+                    </div>
+                    <div class="form-group mb-0 d-flex align-end pb-2">
+                        <label class="d-flex align-center gap-2 text-sm cursor-pointer mb-0">
+                            <input type="checkbox" name="isActive" id="modalIsActive" value="true" checked />
+                            <span>Đang sử dụng</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <icon name="check" /> Lưu danh mục
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openItemModal(id, category, code, name, sortOrder, isActive) {
+            document.getElementById('modalItemId').value = id || 0;
+            document.getElementById('modalCategory').value = category;
+            document.getElementById('modalCode').value = code || '';
+            document.getElementById('modalName').value = name || '';
+            document.getElementById('modalSortOrder').value = sortOrder || 1;
+            document.getElementById('modalIsActive').checked = isActive !== false;
+            document.getElementById('modalTitle').textContent = id > 0 ? 'Chỉnh sửa phần tử danh mục' : 'Thêm phần tử mới';
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').style.display = 'none';
+        }
+    </script>
+}

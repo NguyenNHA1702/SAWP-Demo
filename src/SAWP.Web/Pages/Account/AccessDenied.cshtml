@@ -1,0 +1,40 @@
+@page
+@{
+    ViewData["Title"] = "Từ chối truy cập";
+    Layout = "_PublicLayout";
+}
+
+<div style="max-width: 540px; margin: 4rem auto; text-align: center;">
+    <div class="sticker-card" style="padding: 3rem 2rem;">
+        <icon name="alert-triangle" shape="squircle" tone="danger" size="xl" style="margin-bottom: 1.5rem;" />
+        <h2 style="font-size: 2rem; margin-bottom: 0.75rem; color: var(--danger-coral);">Từ chối truy cập (MSG10)</h2>
+        <p style="font-size: 1.1rem; color: var(--fg-muted); margin-bottom: 2rem;">
+            Bạn không có quyền truy cập hoặc thực hiện thao tác này trong hệ thống. Vui lòng kiểm tra lại quyền hạn hoặc liên hệ Giáo vụ/Quản trị viên.
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 1rem;">
+            @if (CurrentUser.IsAuthenticated)
+            {
+                var targetDashboard = CurrentUser.Role switch
+                {
+                    nameof(SystemRole.Parent) => "/Parent/Index",
+                    nameof(SystemRole.Teacher) => "/Teacher/Index",
+                    nameof(SystemRole.Office) => "/Office/Index",
+                    nameof(SystemRole.Service) => "/Service/Index",
+                    nameof(SystemRole.Board) => "/Board/Index",
+                    nameof(SystemRole.Admin) => "/Admin/Index",
+                    _ => "/"
+                };
+                <a href="@targetDashboard" class="btn btn-candy btn-lg">
+                    <icon name="home" size="md" /> Về trang tổng quan (@CurrentUser.Role)
+                </a>
+            }
+            else
+            {
+                <a href="/Account/Login" class="btn btn-candy btn-lg">
+                    <icon name="user" size="md" /> Đăng nhập lại
+                </a>
+            }
+        </div>
+    </div>
+</div>

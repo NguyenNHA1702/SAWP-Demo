@@ -1,0 +1,220 @@
+@page
+@model SAWP.Web.Pages.Board.Requests.TransfersModel
+@{
+    ViewData["Title"] = "BGH Phê duyệt chuyển lớp";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Board/Index">Ban Giám hiệu</a> &rsaquo; 
+            <span>Phê duyệt chuyển lớp</span>
+        </div>
+        <h1 class="page-title">Phê duyệt đề nghị chuyển lớp học</h1>
+        <p class="text-muted">Xem xét và ra quyết định chính thức về nguyện vọng chuyển lớp học sinh (UC-38, BR-38)</p>
+    </div>
+    <a asp-page="/Board/Index" class="btn btn-secondary">
+        <icon name="arrow-left" /> Bảng điều khiển BGH
+    </a>
+</div>
+
+<!-- Pending BGH Approval -->
+<div class="app-card mb-6">
+    <div class="card-header d-flex justify-between align-center bg-peach-subtle">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="shuffle" class="text-warning" /> Hồ sơ chờ Ban Giám hiệu phê duyệt
+            <span class="badge badge-warning">@Model.PendingRequests.Count</span>
+        </h2>
+    </div>
+
+    @if (!Model.PendingRequests.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            <icon name="check-circle" style="width: 44px; height: 44px;" class="text-mint mb-2" />
+            <div class="font-semibold text-base">Hiện không có hồ sơ chuyển lớp nào cần BGH duyệt!</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh</th>
+                        <th>Lộ trình chuyển lớp</th>
+                        <th>Lý do phụ huynh</th>
+                        <th>Ý kiến Giáo vụ trình</th>
+                        <th>Ngày trình</th>
+                        <th class="text-right" style="min-width: 220px;">Quyết định của BGH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.PendingRequests)
+                    {
+                        var ct = req.ClassTransferDetail;
+                        <tr>
+                            <td class="font-mono font-bold text-primary">@req.RequestCode</td>
+                            <td>
+                                <div class="font-semibold text-base">@req.Student?.FullName</div>
+                                <span class="badge badge-subtle text-xs">Mã: @req.Student?.StudentCode</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-center gap-2">
+                                    <span class="badge badge-secondary">Lớp @ct?.CurrentClass?.Name</span>
+                                    <icon name="arrow-right" class="text-muted" />
+                                    <span class="badge badge-primary font-bold">Lớp @ct?.TargetClass?.Name</span>
+                                </div>
+                            </td>
+                            <td class="text-sm" style="max-width: 240px;">
+                                @ct?.Reason
+                            </td>
+                            <td class="text-xs text-secondary" style="max-width: 220px;">
+                                @(req.StatusHistories.LastOrDefault()?.ActionNotes ?? "Giáo vụ đã thẩm định")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-2">
+                                    <form method="post" asp-page-handler="Approve" asp-route-id="@req.Id" class="d-inline" onsubmit="return confirm('Ban Giám hiệu xác nhận PHÊ DUYỆT cho học sinh @req.Student?.FullName chuyển sang Lớp @ct?.TargetClass?.Name?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-candy btn-sm">
+                                            <icon name="check" /> Phê duyệt
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openRejectModal(@req.Id, '@req.RequestCode', '@req.Student?.FullName')">
+                                        <icon name="x" /> Từ chối
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Processed Requests History -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="history" class="text-secondary" /> Lịch sử BGH giải quyết chuyển lớp (@Model.ProcessedRequests.Count)
+        </h2>
+    </div>
+
+    @if (!Model.ProcessedRequests.Any())
+    {
+        <div class="card-body text-center py-5 text-muted text-sm">
+            Chưa có lịch sử phê duyệt chuyển lớp nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh</th>
+                        <th>Lộ trình</th>
+                        <th>Trạng thái</th>
+                        <th>Ý kiến / Lý do BGH</th>
+                        <th>Ngày ra quyết định</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.ProcessedRequests)
+                    {
+                        var ct = req.ClassTransferDetail;
+                        <tr>
+                            <td class="font-mono text-sm font-semibold">@req.RequestCode</td>
+                            <td>@req.Student?.FullName</td>
+                            <td class="text-sm">
+                                Lớp @ct?.CurrentClass?.Name &rarr; Lớp @ct?.TargetClass?.Name
+                            </td>
+                            <td>
+                                @switch (req.Status)
+                                {
+                                    case SAWP.Web.Domain.RequestStatus.Approved:
+                                        <span class="badge badge-info"><icon name="clock" /> Đã duyệt (Chờ GV phân lớp)</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Completed:
+                                        <span class="badge badge-success"><icon name="check-check" /> Đã chuyển xong</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Rejected:
+                                        <span class="badge badge-danger"><icon name="x-circle" /> BGH từ chối</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Cancelled:
+                                        <span class="badge badge-secondary"><icon name="slash" /> Phụ huynh hủy</span>
+                                        break;
+                                    default:
+                                        <span class="badge">@req.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-xs text-muted" style="max-width: 250px;">
+                                @(req.RejectionReason ?? req.Notes ?? "—")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(req.DecidedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Reject -->
+<div id="rejectModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 480px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-danger-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold text-danger d-flex align-center gap-2">
+                <icon name="alert-triangle" /> BGH Từ chối đề nghị chuyển lớp
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Reject">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="rejectRequestId" />
+
+                <p class="text-sm mb-3">
+                    Ban Giám hiệu từ chối đề nghị <strong id="rejectRequestCode"></strong> của học sinh <strong id="rejectStudentName"></strong>.
+                </p>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Ý kiến / Lý do từ chối của BGH <span class="text-danger">*</span></label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do hoặc chỉ đạo của Ban Giám hiệu..." required></textarea>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeRejectModal()">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <icon name="x" /> Xác nhận từ chối
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openRejectModal(id, code, name) {
+            document.getElementById('rejectRequestId').value = id;
+            document.getElementById('rejectRequestCode').textContent = code;
+            document.getElementById('rejectStudentName').textContent = name;
+            const modal = document.getElementById('rejectModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
+}

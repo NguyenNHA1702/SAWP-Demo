@@ -1,0 +1,58 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Hồ sơ các con";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Hồ sơ các con (UC-06, BR-06)</h1>
+        <div class="page-subtitle">Thông tin học sinh, lớp học và tình hình học tập của con cái bạn tại trường</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    @foreach (var child in Model.Children)
+    {
+        var activeCls = child.ClassAssignments.FirstOrDefault()?.Class;
+
+        <div class="sticker-card interactive">
+            <div class="card-header">
+                <icon name="user" shape="squircle" tone="mint" size="lg" />
+                @if (activeCls != null)
+                {
+                    <span class="badge badge-violet">Lớp @activeCls.Name</span>
+                }
+                else
+                {
+                    <span class="badge badge-slate">Chưa xếp lớp</span>
+                }
+            </div>
+
+            <h3 style="font-size: 1.35rem; margin-bottom: 0.25rem;">@child.FullName</h3>
+            <div style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1.25rem;">
+                Mã học sinh: <code>@child.StudentCode</code> · Sinh ngày: @Model.FormatDate(child.DateOfBirth)
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; background-color: #F8FAFC; padding: 1rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-light); margin-bottom: 1.5rem;">
+                <div><strong>Giới tính:</strong> @(child.Gender == Gender.Male ? "Nam" : "Nữ")</div>
+                <div><strong>Ngày nhập học:</strong> @Model.FormatDate(child.AdmissionDate)</div>
+                <div><strong>Nơi sinh:</strong> @(child.PlaceOfBirth ?? "Chưa cập nhật")</div>
+                <div><strong>Ghi chú sức khỏe:</strong> @(child.HealthNotes ?? "Bình thường")</div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="/Parent/Attendance/Index" class="btn btn-sm btn-outline">
+                    <icon name="calendar" size="sm" /> Điểm danh
+                </a>
+                <a href="/Parent/Lunch/Index" class="btn btn-sm btn-outline">
+                    <icon name="utensils" size="sm" /> Ăn bán trú
+                </a>
+                <a href="/Parent/Schedule/Index" class="btn btn-sm btn-outline">
+                    <icon name="clock" size="sm" /> Thời khóa biểu
+                </a>
+            </div>
+        </div>
+    }
+</div>

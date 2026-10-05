@@ -1,0 +1,90 @@
+@page
+@model EditModel
+@{
+    ViewData["Title"] = $"Chỉnh sửa: {Model.FullName}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Students/Index" style="font-size:0.85rem; color:var(--fg-muted);">Hồ sơ học sinh</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <a href="/Office/Students/Detail?id=@Model.Id" style="font-size:0.85rem; color:var(--fg-muted);">@Model.FullName</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Chỉnh sửa</span>
+        </div>
+        <h1 class="page-title">Chỉnh sửa Hồ sơ Học sinh (UC-08)</h1>
+        <div class="page-subtitle">Cập nhật thông tin hành chính học sinh (BR-52 không xóa vật lý)</div>
+    </div>
+</div>
+
+<div style="max-width: 720px; margin: 0 auto;">
+    <div class="sticker-card">
+        <form method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="field">
+                    <label class="field-label">Mã học sinh</label>
+                    <input asp-for="StudentCode" class="input" disabled style="background-color:#F8FAFC; cursor:not-allowed;" />
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="name">Họ và tên học sinh (*)</label>
+                    <input asp-for="FullName" id="name" class="input" required />
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="field">
+                    <label class="field-label" for="dob">Ngày sinh (*)</label>
+                    <input asp-for="DateOfBirth" id="dob" type="date" class="input" required />
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="gender">Giới tính</label>
+                    <select asp-for="Gender" id="gender" class="select">
+                        <option value="1">Nam</option>
+                        <option value="2">Nữ</option>
+                        <option value="3">Khác</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="field">
+                    <label class="field-label" for="status">Trạng thái học tập (BR-52)</label>
+                    <select asp-for="Status" id="status" class="select">
+                        <option value="Active">Đang theo học (Active)</option>
+                        <option value="Transferred">Đã chuyển trường (Transferred)</option>
+                        <option value="Graduated">Đã tốt nghiệp (Graduated)</option>
+                        <option value="Withdrawn">Đã thôi học (Withdrawn)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="pob">Nơi sinh</label>
+                    <input asp-for="PlaceOfBirth" id="pob" class="input" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="address">Địa chỉ thường trú</label>
+                <input asp-for="Address" id="address" class="input" />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="health">Ghi chú sức khỏe & Dị ứng</label>
+                <textarea asp-for="HealthNotes" id="health" class="textarea"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-candy btn-lg" style="flex: 1;">
+                    <icon name="check" size="md" /> Lưu các thay đổi
+                </button>
+                <a href="/Office/Students/Detail?id=@Model.Id" class="btn btn-outline btn-lg">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

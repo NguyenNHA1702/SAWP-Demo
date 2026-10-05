@@ -1,0 +1,113 @@
+@page
+@model SAWP.Web.Pages.Parent.Requests.CreateTransferModel
+@{
+    ViewData["Title"] = "Đơn xin chuyển lớp";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Parent/Index">Trang chính</a> &rsaquo; 
+            <a asp-page="/Parent/Requests/Index">Đơn từ & Yêu cầu</a> &rsaquo; 
+            <span>Xin chuyển lớp</span>
+        </div>
+        <h1 class="page-title">Đơn đề nghị chuyển lớp học</h1>
+        <p class="text-muted">Gửi nguyện vọng chuyển lớp trong cùng khối đến Ban Giám hiệu và Giáo vụ (UC-36)</p>
+    </div>
+    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">
+        <icon name="arrow-left" /> Quay lại danh sách
+    </a>
+</div>
+
+<div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+    <div class="app-card">
+        <div class="card-header bg-lavender-subtle">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="shuffle" class="text-primary" /> Thông tin nguyện vọng chuyển lớp
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="SelectedStudentId">Chọn con / học sinh <span class="text-danger">*</span></label>
+                    <select asp-for="SelectedStudentId" class="form-control" onchange="window.location.href='?studentId=' + this.value" required>
+                        @foreach (var child in Model.Children)
+                        {
+                            var cls = child.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                            <option value="@child.Id">@child.FullName (@child.StudentCode)@(string.IsNullOrEmpty(cls) ? "" : $" - Đang học lớp {cls}")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="p-3 bg-light rounded mb-4 d-flex justify-between align-center" style="border: 2px dashed var(--border-color);">
+                    <div>
+                        <div class="text-xs text-muted">Lớp đang theo học:</div>
+                        <div class="font-bold text-base text-primary">
+                            @(Model.CurrentClass != null ? $"Lớp {Model.CurrentClass.Name} (Khối {Model.CurrentClass.Grade})" : "Chưa phân lớp")
+                        </div>
+                    </div>
+                    <div>
+                        <span class="badge badge-subtle">Năm học 2026-2027</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="TargetClassId">Lớp nguyện vọng chuyển đến <span class="text-danger">*</span></label>
+                    @if (!Model.EligibleTargetClasses.Any())
+                    {
+                        <div class="alert-box alert-warning">
+                            <icon name="alert-triangle" />
+                            <span>Hiện không có lớp nào khác trong cùng khối để chuyển đến hoặc các lớp đã đủ sĩ số tối đa.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <select asp-for="TargetClassId" class="form-control" required>
+                            <option value="">-- Chọn lớp tiếp nhận --</option>
+                            @foreach (var tc in Model.EligibleTargetClasses)
+                            {
+                                var currentCount = tc.ClassAssignments.Count;
+                                var isFull = currentCount >= tc.Capacity;
+                                <option value="@tc.Id" disabled="@(isFull ? "disabled" : null)">
+                                    Lớp @tc.Name &ndash; Sĩ số: @currentCount / @tc.Capacity HS @(isFull ? "(ĐÃ ĐỦ SĨ SỐ)" : "")
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="TargetClassId" class="form-error"></span>
+                    }
+                </div>
+
+                <div class="form-group mb-5">
+                    <label class="form-label" asp-for="Reason">Lý do xin chuyển lớp <span class="text-danger">*</span></label>
+                    <textarea asp-for="Reason" class="form-control" rows="4" placeholder="Nêu rõ lý do gia đình đề nghị chuyển lớp (ví dụ: điều kiện đưa đón, nguyện vọng bán trú, lý do sức khỏe hoặc hòa nhập...)" required></textarea>
+                    <span asp-validation-for="Reason" class="form-error"></span>
+                </div>
+
+                <div class="d-flex justify-end gap-3 pt-3 border-top">
+                    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary" @(!Model.EligibleTargetClasses.Any() ? "disabled" : "")>
+                        <icon name="send" /> Gửi đơn xin chuyển lớp
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="app-card mb-4">
+            <div class="card-header bg-light">
+                <h3 class="card-title text-sm font-semibold">Quy định chuyển lớp (BR-14, BR-15, BR-38)</h3>
+            </div>
+            <div class="card-body text-sm text-secondary">
+                <ul class="pl-4 mb-0" style="line-height: 1.7;">
+                    <li><strong>Cùng khối lớp:</strong> Học sinh chỉ được chuyển giữa các lớp trong cùng khối (Khối 1 sang Khối 1, v.v.).</li>
+                    <li><strong>Giới hạn sĩ số (BR-15):</strong> Lớp tiếp nhận phải còn chỉ tiêu tiếp nhận (sĩ số dưới 35 học sinh).</li>
+                    <li><strong>Thẩm quyền phê duyệt:</strong> Ban Giám hiệu là cấp có thẩm quyền phê duyệt chính thức (UC-38).</li>
+                    <li><strong>Thực thi chuyển lớp (BR-37):</strong> Sau khi BGH phê duyệt, bộ phận Giáo vụ sẽ hoàn thiện thủ tục và cập nhật sổ điểm danh chính thức.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

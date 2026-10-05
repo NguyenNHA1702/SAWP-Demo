@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Playful Geometric Design Palette */
+  --bg-main: #F8F9FE;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --fg-main: #0F172A;
+  --fg-muted: #64748B;
+  --fg-subtle: #94A3B8;
+
+  /* Accent Tones */
+  --accent-violet: #8B5CF6;
+  --accent-violet-light: #EDE9FE;
+  --secondary-pink: #F472B6;
+  --secondary-pink-light: #FCE7F3;
+  --tertiary-amber: #FBBF24;
+  --tertiary-amber-light: #FEF3C7;
+  --quaternary-mint: #10B981;
+  --quaternary-mint-light: #D1FAE5;
+  --danger-coral: #F43F5E;
+  --danger-coral-light: #FFE4E6;
+  --info-sky: #0EA5E9;
+  --info-sky-light: #E0F2FE;
+
+  /* Pastel Surface Tints for Cards, Headers, and Badges */
+  --bg-lavender-subtle: #F3E8FF;
+  --bg-mint-subtle: #D1FAE5;
+  --bg-amber-subtle: #FEF3C7;
+  --bg-peach-subtle: #FFEDD5;
+  --bg-pink-subtle: #FCE7F3;
+  --bg-sky-subtle: #E0F2FE;
+  --bg-slate-subtle: #F1F5F9;
+
+  /* Text Colors */
+  --text-primary: #7C3AED;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-mint: #059669;
+  --text-warning: #D97706;
+  --text-danger: #E11D48;
+  --text-info: #0284C7;
+
+  /* Borders & Shadows (Neo-Brutalist / Playful Geometric) */
+  --border-dark: #1E293B;
+  --border-light: #E2E8F0;
+  --border-width: 2px;
+  --border-subtle: 1px solid #E2E8F0;
+  --border-solid: 2px solid #1E293B;
+
+  --shadow-hard: 4px 4px 0px #1E293B;
+  --shadow-hard-hover: 6px 6px 0px #1E293B;
+  --shadow-hard-active: 2px 2px 0px #1E293B;
+  --shadow-soft: 0 10px 25px -5px rgba(30, 41, 59, 0.08);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Fonts - Be Vietnam Pro with 100% Native Vietnamese Diacritics Support */
+  --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Motion */
+  --transition-bounce: 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth: 0.18s ease-in-out;
+}

@@ -1,0 +1,173 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+    Layout = "_PublicLayout";
+}
+
+<div style="display:flex; flex-direction:column; gap:3rem;">
+    <!-- Hero Section -->
+    <section class="sticker-card" style="background: linear-gradient(135deg, #FFFDF5 0%, #EDE9FE 100%); padding: 3rem 2.5rem; text-align: center; position: relative;">
+        <span class="badge badge-violet" style="margin-bottom: 1.25rem;">
+            <icon name="graduation-cap" size="sm" /> Năm học 2026 - 2027
+        </span>
+        <h1 style="font-size: 2.8rem; margin-bottom: 1rem; color: var(--fg-main);">
+            Hệ thống Quản trị & Tác nghiệp<br />
+            <span style="color: var(--accent-violet);">Trường Tiểu học</span> SAWP
+        </h1>
+        <p style="font-size: 1.15rem; color: var(--fg-muted); max-width: 680px; margin: 0 auto 2rem;">
+            Nền tảng kết nối liền mạch giữa Phụ huynh, Giáo viên chủ nhiệm, Giáo vụ, Nhân viên bếp ăn và Ban Giám hiệu trong mọi tác nghiệp học đường hàng ngày.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <a href="/Account/Login" class="btn btn-candy btn-lg">
+                <icon name="user" size="md" /> Đăng nhập hệ thống
+            </a>
+            <a href="#portals" class="btn btn-outline btn-lg">
+                <icon name="book-open" size="md" /> Khám phá các cổng chức năng
+            </a>
+        </div>
+    </section>
+
+    <!-- Key Portals -->
+    <section id="portals">
+        <div class="page-head" style="margin-bottom: 1.5rem;">
+            <div>
+                <h2 class="page-title">Cổng tác nghiệp các vai trò</h2>
+                <div class="page-subtitle">Hệ thống phân quyền nghiêm ngặt theo đúng phân hệ nghiệp vụ</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+            <!-- Parent Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="user" shape="squircle" tone="mint" size="lg" />
+                    <span class="badge badge-mint">Phụ huynh</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Phụ huynh</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Xem hồ sơ con, theo dõi điểm danh hàng ngày, đăng ký suất ăn bán trú, nộp đơn xin nghỉ học và xin cấp giấy tờ.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập vai trò Phụ huynh <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+
+            <!-- Teacher Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="book-open" shape="squircle" tone="violet" size="lg" />
+                    <span class="badge badge-violet">Giáo viên</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Giáo viên chủ nhiệm</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Điểm danh lớp hàng ngày, duyệt đơn xin nghỉ học thường nhật (dưới 3 ngày), quản lý danh sách học sinh và thời khóa biểu.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập vai trò GVCN <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+
+            <!-- Office Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="file-text" shape="squircle" tone="amber" size="lg" />
+                    <span class="badge badge-amber">Giáo vụ</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Giáo vụ trường</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Quản lý hồ sơ học sinh, phân công lớp và giáo viên, điều chỉnh điểm danh sau khóa sổ, thẩm định đơn chuyển lớp và cấp phát hồ sơ.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập vai trò Giáo vụ <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+
+            <!-- Service Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="utensils" shape="squircle" tone="pink" size="lg" />
+                    <span class="badge badge-pink">Bếp ăn</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Dịch vụ Bán trú & Bếp</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Cấu hình ngày phục vụ và thực đơn, chốt danh sách suất ăn thực tế theo lớp, điều chỉnh suất ăn ngoại lệ và xem báo cáo.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập vai trò Bếp ăn <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+
+            <!-- Board Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="shield" shape="squircle" tone="slate" size="lg" />
+                    <span class="badge badge-slate">Ban Giám hiệu</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Ban Giám hiệu</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Phê duyệt đơn xin nghỉ học dài ngày leo thang, quyết định chuyển lớp, theo dõi bảng điều khiển chỉ số toàn trường và phát hành thông báo.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập vai trò BGH <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+
+            <!-- Admin Portal -->
+            <div class="sticker-card interactive">
+                <div class="card-header">
+                    <icon name="settings" shape="squircle" tone="danger" size="lg" />
+                    <span class="badge badge-danger">Quản trị</span>
+                </div>
+                <h3 style="margin-bottom: 0.5rem;">Cổng Quản trị hệ thống</h3>
+                <p style="color: var(--fg-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+                    Quản trị tài khoản, vai trò, quyền hạn, dữ liệu tham chiếu, quy tắc thời hạn nghiệp vụ, hộp thư giả lập và nhật ký kiểm toán hệ thống.
+                </p>
+                <a href="/Account/Login" class="btn btn-sm btn-outline" style="width: 100%;">
+                    Đăng nhập Quản trị viên <icon name="chevron-right" size="sm" />
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Announcements Section -->
+    <section class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="bell" tone="violet" size="md" /> Thông báo từ Nhà trường
+            </h3>
+            <span class="badge badge-violet">Mới nhất</span>
+        </div>
+
+        @if (Model.Announcements.Any())
+        {
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
+                @foreach (var a in Model.Announcements)
+                {
+                    <div style="padding-bottom:1rem; border-bottom: 1px solid var(--border-light);">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+                            @if (a.IsPinned)
+                            {
+                                <span class="badge badge-pink" style="font-size:0.65rem; padding:0.1rem 0.4rem;">Ghim</span>
+                            }
+                            <h4 style="font-size:1.1rem; margin:0;">@a.Title</h4>
+                            <span style="font-size:0.8rem; color:var(--fg-muted); margin-left:auto;">
+                                @Model.FormatDateTime(a.PublishedAt)
+                            </span>
+                        </div>
+                        <p style="color:var(--fg-muted); font-size:0.95rem; margin:0;">
+                            @a.Content
+                        </p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Chưa có thông báo mới</div>
+                <div class="empty-desc">Các thông báo mới nhất từ Ban Giám hiệu sẽ được hiển thị tại đây.</div>
+            </div>
+        }
+    </section>
+</div>

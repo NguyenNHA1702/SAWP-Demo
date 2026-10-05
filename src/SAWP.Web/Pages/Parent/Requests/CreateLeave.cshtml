@@ -1,0 +1,169 @@
+@page
+@model SAWP.Web.Pages.Parent.Requests.CreateLeaveModel
+@{
+    ViewData["Title"] = "Tạo đơn xin nghỉ học";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Parent/Index">Trang chính</a> &rsaquo; 
+            <a asp-page="/Parent/Requests/Index">Đơn từ & Đề nghị</a> &rsaquo; 
+            <span>Tạo đơn nghỉ học</span>
+        </div>
+        <h1 class="page-title">Tạo đơn xin nghỉ học</h1>
+        <p class="text-muted">Gửi đơn xin nghỉ phép cho con đến Giáo viên chủ nhiệm hoặc Ban Giám hiệu (UC-25)</p>
+    </div>
+    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">
+        <icon name="arrow-left" /> Quay lại danh sách
+    </a>
+</div>
+
+<div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+    <div class="app-card">
+        <div class="card-header card-header-violet">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="file-text" /> Thông tin đơn xin nghỉ học
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post" id="leaveForm">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="SelectedStudentId">Chọn con / học sinh <span class="text-danger">*</span></label>
+                    <select asp-for="SelectedStudentId" class="form-control" required>
+                        @foreach (var child in Model.Children)
+                        {
+                            var cls = child.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                            <option value="@child.Id">@child.FullName (@child.StudentCode)@(string.IsNullOrEmpty(cls) ? "" : $" - Lớp {cls}")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="SelectedStudentId" class="form-error"></span>
+                </div>
+
+                <div class="grid grid-2 gap-4 mb-4">
+                    <div class="form-group">
+                        <label class="form-label" asp-for="StartDate">Từ ngày <span class="text-danger">*</span></label>
+                        <input type="date" asp-for="StartDate" class="form-control" id="startDateInput" required />
+                        <span asp-validation-for="StartDate" class="form-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" asp-for="EndDate">Đến hết ngày <span class="text-danger">*</span></label>
+                        <input type="date" asp-for="EndDate" class="form-control" id="endDateInput" required />
+                        <span asp-validation-for="EndDate" class="form-error"></span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Duration & Escalation Warning Notice -->
+                <div id="escalationNotice" class="alert-box alert-warning mb-4" style="display: none;">
+                    <icon name="alert-triangle" class="text-warning" />
+                    <div>
+                        <strong>Lưu ý phê duyệt Ban Giám hiệu (BR-25, BR-41):</strong>
+                        <div id="noticeDetail">Đơn xin nghỉ từ 4 ngày trở lên sẽ được chuyển trực tiếp lên Ban Giám hiệu xét duyệt sau khi Giáo viên chủ nhiệm tiếp nhận thông tin.</div>
+                    </div>
+                </div>
+
+                <div id="normalNotice" class="alert-box alert-info mb-4">
+                    <icon name="info" class="text-info" />
+                    <div>
+                        <strong>Quy trình xét duyệt chuẩn (BR-24, BR-25):</strong>
+                        <div id="normalDetail">Thời gian nghỉ dự kiến: 1 ngày. Giáo viên chủ nhiệm sẽ trực tiếp phê duyệt đơn này.</div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-5">
+                    <label class="form-label" asp-for="Reason">Lý do xin nghỉ <span class="text-danger">*</span></label>
+                    <textarea asp-for="Reason" class="form-control" rows="4" placeholder="Ví dụ: Cháu bị sốt cao cần đi khám và nghỉ ngơi tại nhà theo chỉ định của bác sĩ..." required></textarea>
+                    <span asp-validation-for="Reason" class="form-error"></span>
+                    <small class="text-muted mt-1 d-block">Vui lòng nêu rõ lý do để Giáo viên chủ nhiệm và Nhà trường nắm thông tin kịp thời.</small>
+                </div>
+
+                <div class="d-flex justify-end gap-3 pt-3 border-top">
+                    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success" id="btnSubmit">
+                        <icon name="send" /> Gửi đơn xin nghỉ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="app-card mb-4">
+            <div class="card-header card-header-soft-amber">
+                <h3 class="card-title text-sm font-semibold text-warning d-flex align-center gap-2">
+                    <icon name="alert-triangle" /> Quy định xin nghỉ học (BR-24, BR-25)
+                </h3>
+            </div>
+            <div class="card-body text-sm text-secondary">
+                <ul class="pl-4 mb-0" style="line-height: 1.7;">
+                    <li><strong>Thời hạn gửi đơn:</strong> Phụ huynh nên gửi đơn trước giờ điểm danh buổi sáng (trước 07:30) của ngày bắt đầu nghỉ.</li>
+                    <li><strong>Dưới 4 ngày (&le; 3 ngày):</strong> Giáo viên chủ nhiệm xem xét và phê duyệt (UC-26).</li>
+                    <li><strong>Từ 4 ngày trở lên:</strong> Hệ thống tự động chuyển lên Ban Giám hiệu phê duyệt (UC-27).</li>
+                    <li><strong>Không trùng lặp:</strong> Không được gửi đơn trùng với khoảng thời gian đã xin phép trước đó (BR-24).</li>
+                    <li><strong>Hủy đơn (BR-36):</strong> Phụ huynh có thể hủy đơn khi đơn còn ở trạng thái <em>Chờ duyệt</em>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="app-card">
+            <div class="card-header card-header-soft-mint">
+                <h3 class="card-title text-sm font-semibold text-mint d-flex align-center gap-2">
+                    <icon name="utensils" /> Dịch vụ bán trú tự động (BR-29)
+                </h3>
+            </div>
+            </div>
+            <div class="card-body text-sm text-secondary">
+                <p class="mb-0">
+                    Khi đơn xin nghỉ học được <strong>chấp thuận</strong>, hệ thống sẽ tự động cập nhật trạng thái nghỉ phép vào sổ điểm danh và tự động hủy suất ăn bán trú trong những ngày nghỉ (nếu đơn duyệt trước giờ chốt suất ăn 08:00 hàng ngày).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const startInput = document.getElementById('startDateInput');
+            const endInput = document.getElementById('endDateInput');
+            const escalationNotice = document.getElementById('escalationNotice');
+            const normalNotice = document.getElementById('normalNotice');
+            const noticeDetail = document.getElementById('noticeDetail');
+            const normalDetail = document.getElementById('normalDetail');
+
+            function updateDays() {
+                if (!startInput.value || !endInput.value) return;
+                const d1 = new Date(startInput.value);
+                const d2 = new Date(endInput.value);
+                if (d2 < d1) {
+                    normalNotice.style.display = 'none';
+                    escalationNotice.style.display = 'none';
+                    return;
+                }
+                const diffTime = Math.abs(d2 - d1);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                if (diffDays > 3) {
+                    escalationNotice.style.display = 'flex';
+                    normalNotice.style.display = 'none';
+                    noticeDetail.textContent = `Đơn xin nghỉ ${diffDays} ngày (vượt quá 3 ngày) sẽ được chuyển trực tiếp lên Ban Giám hiệu xét duyệt (BR-25, BR-41).`;
+                } else {
+                    escalationNotice.style.display = 'none';
+                    normalNotice.style.display = 'flex';
+                    normalDetail.textContent = `Thời gian nghỉ dự kiến: ${diffDays} ngày. Giáo viên chủ nhiệm sẽ trực tiếp phê duyệt đơn này.`;
+                }
+            }
+
+            startInput.addEventListener('change', function () {
+                if (endInput.value < startInput.value) {
+                    endInput.value = startInput.value;
+                }
+                updateDays();
+            });
+            endInput.addEventListener('change', updateDays);
+            updateDays();
+        });
+    </script>
+}

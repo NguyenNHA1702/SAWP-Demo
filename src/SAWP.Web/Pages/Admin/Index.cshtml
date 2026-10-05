@@ -1,0 +1,122 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan Quản trị";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Bảng điều khiển Quản trị viên Hệ thống</h1>
+        <div class="page-subtitle">Xin chào <strong>@CurrentUser.FullName</strong> · Quản trị kỹ thuật, phân quyền, cấu hình thông số và nhật ký bảo mật toàn hệ thống</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Admin/Users/Index" class="btn btn-candy">
+            <icon name="user" size="sm" /> Tạo tài khoản người dùng
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="users" shape="circle" tone="danger" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalUsers</div>
+            <div class="stat-label">Tài khoản người dùng</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="shield" shape="circle" tone="violet" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalRoles</div>
+            <div class="stat-label">Vai trò hệ thống</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="lock" shape="circle" tone="slate" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalAuditLogs</div>
+            <div class="stat-label">Nhật ký kiểm toán</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="mail" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalEmailsOutbox</div>
+            <div class="stat-label">Email giả lập & OTP</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Recent Security Audit Logs -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="lock" shape="squircle" tone="slate" size="md" /> Nhật ký kiểm toán gần đây (UC-58, BR-45)
+            </h3>
+            <a href="/Admin/Audit/Index" style="font-size: 0.85rem;">Xem tất cả &rarr;</a>
+        </div>
+
+        @if (Model.RecentAuditLogs.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                @foreach (var log in Model.RecentAuditLogs)
+                {
+                    <div style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light); font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                            <span class="badge badge-slate" style="font-size: 0.75rem;">@log.Action</span>
+                            <span style="font-size: 0.8rem; color: var(--fg-muted);">@Model.FormatDateTime(log.Timestamp)</span>
+                        </div>
+                        <div><strong>@log.ActorName</strong> (@log.ActorRole) tác động lên <code>@log.EntityName</code> (Id: @log.EntityId)</div>
+                        @if (!string.IsNullOrEmpty(log.Details))
+                        {
+                            <div style="color: var(--fg-muted); font-size: 0.8rem; margin-top: 0.15rem;">@log.Details</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Chưa có nhật ký</div>
+                <div class="empty-desc">Nhật ký kiểm toán an ninh sẽ được ghi nhận tại đây khi có tác nghiệp.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Administrative Modules -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="settings" shape="squircle" tone="danger" size="md" /> Phân hệ Quản trị hệ thống
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+            <a href="/Admin/Users/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="users" tone="danger" size="sm" /> Quản lý tài khoản & Cấp phát quyền (UC-53, UC-55)
+            </a>
+            <a href="/Admin/Roles/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="shield" tone="violet" size="sm" /> Ma trận vai trò & Quyền hạn (UC-54)
+            </a>
+            <a href="/Admin/ReferenceData/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="file-text" tone="amber" size="sm" /> Danh mục dữ liệu tham chiếu (UC-56)
+            </a>
+            <a href="/Admin/Settings/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="settings" tone="mint" size="sm" /> Cấu hình tham số hệ thống & Thời hạn (UC-59)
+            </a>
+            <a href="/Admin/EmailOutbox/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="mail" tone="pink" size="sm" /> Hộp thư giả lập & Kiểm tra mã OTP
+            </a>
+            <a href="/Admin/Audit/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="lock" tone="slate" size="sm" /> Nhật ký an ninh & Kiểm toán đầy đủ (UC-58)
+            </a>
+        </div>
+    </div>
+</div>

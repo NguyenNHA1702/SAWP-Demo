@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SAWP Tiểu Học</title>
+    <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+</head>
+<body class="bg-dots">
+    <header class="public-header">
+        <a href="/" class="brand-logo">
+            <icon name="graduation-cap" shape="squircle" tone="violet" size="md" />
+            <span>SAWP</span>
+            <span class="brand-badge">Tiểu học</span>
+        </a>
+
+        <nav class="public-nav">
+            @if (CurrentUser.IsAuthenticated)
+            {
+                var targetDashboard = CurrentUser.Role switch
+                {
+                    nameof(SystemRole.Parent) => "/Parent/Index",
+                    nameof(SystemRole.Teacher) => "/Teacher/Index",
+                    nameof(SystemRole.Office) => "/Office/Index",
+                    nameof(SystemRole.Service) => "/Service/Index",
+                    nameof(SystemRole.Board) => "/Board/Index",
+                    nameof(SystemRole.Admin) => "/Admin/Index",
+                    _ => "/"
+                };
+                <a href="@targetDashboard" class="btn btn-sm btn-candy">
+                    <icon name="home" size="sm" /> Vào hệ thống (@CurrentUser.Role)
+                </a>
+            }
+            else
+            {
+                <a href="/Account/Login" class="btn btn-sm btn-candy">
+                    <icon name="user" size="sm" /> Đăng nhập
+                </a>
+            }
+        </nav>
+    </header>
+
+    <main class="public-container">
+        @RenderBody()
+    </main>
+
+    <footer class="public-footer">
+        <div>&copy; 2026 SAWP - Nền tảng Quản trị & Quy trình Tác nghiệp Trường Tiểu học</div>
+        <div style="margin-top:0.35rem; font-size:0.8rem;">Dự án Capstone SEP490_G45 – Thiết kế theo phong cách Playful Geometric</div>
+    </footer>
+
+    <partial name="_Toast" />
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

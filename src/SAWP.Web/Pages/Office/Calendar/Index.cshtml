@@ -1,0 +1,162 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Lịch nhà trường";
+    Layout = "_AppLayout";
+
+    var prevMonthDate = new DateTime(Model.Year, Model.Month, 1).AddMonths(-1);
+    var nextMonthDate = new DateTime(Model.Year, Model.Month, 1).AddMonths(1);
+    string DowVN(DayOfWeek d) => d switch
+    {
+        DayOfWeek.Monday => "Thứ Hai",
+        DayOfWeek.Tuesday => "Thứ Ba",
+        DayOfWeek.Wednesday => "Thứ Tư",
+        DayOfWeek.Thursday => "Thứ Năm",
+        DayOfWeek.Friday => "Thứ Sáu",
+        DayOfWeek.Saturday => "Thứ Bảy",
+        DayOfWeek.Sunday => "Chủ Nhật",
+        _ => d.ToString()
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Lịch Nhà trường & Ngày học (UC-20)</h1>
+        <div class="page-subtitle">Quản lý ngày học, ngày nghỉ lễ và ngày nghỉ đột xuất phục vụ điểm danh và ăn trưa bán trú (BR-27, BR-30)</div>
+    </div>
+    <div class="page-actions">
+        <form method="post" asp-page-handler="GenerateMonth" asp-route-m="@Model.Month" asp-route-y="@Model.Year" style="margin:0;">
+            <button type="submit" class="btn btn-outline">
+                <icon name="refresh-cw" size="sm" /> Tự động sinh lịch tháng @Model.Month (UC-20 A1)
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Month Selector Bar -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <icon name="calendar" shape="squircle" tone="amber" size="md" />
+        <h2 style="font-size: 1.5rem; margin: 0;">Tháng @Model.Month / @Model.Year</h2>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/Office/Calendar/Index?Month=@prevMonthDate.Month&Year=@prevMonthDate.Year" class="btn btn-sm btn-outline">
+            <icon name="chevron-left" size="sm" /> Tháng trước
+        </a>
+        <a href="/Office/Calendar/Index?Month=@DateTime.Today.Month&Year=@DateTime.Today.Year" class="btn btn-sm btn-candy">
+            Hôm nay
+        </a>
+        <a href="/Office/Calendar/Index?Month=@nextMonthDate.Month&Year=@nextMonthDate.Year" class="btn btn-sm btn-outline">
+            Tháng sau <icon name="chevron-right" size="sm" />
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Calendar Days Table -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="clock" shape="squircle" tone="violet" size="md" /> Chi tiết các ngày trong tháng @Model.Month
+            </h3>
+            <span class="badge badge-slate">@Model.CalendarDays.Count ngày cấu hình</span>
+        </div>
+
+        @if (Model.CalendarDays.Any())
+        {
+            <div class="table-container">
+                <table class="table-pop">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Thứ</th>
+                            <th>Trạng thái ngày</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.CalendarDays)
+                        {
+                            var isToday = d.Date == DateTime.Today;
+                            <tr style="@(isToday ? "background-color: #FEF3C7; font-weight: 700;" : "")">
+                                <td>
+                                    <code>@Model.FormatDate(d.Date)</code>
+                                    @if (isToday)
+                                    {
+                                        <span class="badge badge-pink" style="margin-left: 0.35rem; font-size: 0.65rem;">Hôm nay</span>
+                                    }
+                                </td>
+                                <td>@DowVN(d.Date.DayOfWeek)</td>
+                                <td>
+                                    @switch (d.DayType)
+                                    {
+                                        case CalendarDayType.SchoolDay:
+                                            <span class="badge badge-mint"><icon name="check" size="sm" /> Ngày học</span>
+                                            break;
+                                        case CalendarDayType.Weekend:
+                                            <span class="badge badge-slate">Cuối tuần</span>
+                                            break;
+                                        case CalendarDayType.Holiday:
+                                            <span class="badge badge-danger"><icon name="alert-triangle" size="sm" /> Nghỉ lễ</span>
+                                            break;
+                                        case CalendarDayType.ExceptionalClosure:
+                                            <span class="badge badge-amber"><icon name="clock" size="sm" /> Nghỉ đột xuất</span>
+                                            break;
+                                    }
+                                </td>
+                                <td style="font-size: 0.85rem; color: var(--fg-muted);">
+                                    @(d.Note ?? "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="calendar" tone="slate" size="xl" class="empty-icon" />
+                <div class="empty-title">Tháng này chưa được khởi tạo lịch</div>
+                <div class="empty-desc">Nhấn nút "Tự động sinh lịch" ở góc trên hoặc thiết lập ngày học ở mẫu bên phải.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Set Day Type Form -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="edit" shape="squircle" tone="mint" size="md" /> Thiết lập / Thay đổi Ngày
+            </h3>
+        </div>
+
+        <form method="post" asp-page-handler="SetDay">
+            <div class="field">
+                <label class="field-label" for="sDate">Chọn ngày (*)</label>
+                <input asp-for="SelectedDate" id="sDate" type="date" class="input" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="dType">Loại ngày (*)</label>
+                <select asp-for="DayType" id="dType" class="select">
+                    <option value="1">Ngày đi học chuẩn (School Day)</option>
+                    <option value="2">Nghỉ cuối tuần (Weekend)</option>
+                    <option value="3">Nghỉ lễ theo quy định (Holiday)</option>
+                    <option value="4">Nghỉ đột xuất / Thiên tai (Closure)</option>
+                </select>
+                <span class="field-hint">Chỉ có ngày đi học mới mở nhận đăng ký ăn trưa và điểm danh (BR-27, BR-30).</span>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="note">Ghi chú sự kiện / Lý do nghỉ</label>
+                <input asp-for="Note" id="note" class="input" placeholder="ví dụ: Quốc khánh, Nghỉ tránh bão..." />
+            </div>
+
+            <button type="submit" class="btn btn-candy btn-lg" style="width: 100%; margin-top: 1rem;">
+                <icon name="check" size="md" /> Lưu cấu hình ngày (MSG08)
+            </button>
+        </form>
+    </div>
+</div>

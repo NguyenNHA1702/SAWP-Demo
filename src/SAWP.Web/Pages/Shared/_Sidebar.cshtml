@@ -1,0 +1,190 @@
+@{
+    var role = CurrentUser.Role ?? "";
+    var currentPath = Context.Request.Path.Value ?? "";
+
+    bool IsActive(string path) => currentPath.Equals(path, StringComparison.OrdinalIgnoreCase) || 
+                                 (path.Length > 1 && currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase));
+}
+
+<aside class="app-sidebar">
+    <div class="sidebar-header">
+        <a href="/" class="brand-logo">
+            <icon name="graduation-cap" shape="squircle" tone="violet" size="md" />
+            <span>SAWP</span>
+        </a>
+        <div class="sidebar-role-badge">
+            @switch (role)
+            {
+                case nameof(SystemRole.Parent):
+                    <span class="badge badge-mint"><icon name="user" size="sm" /> Phụ huynh</span>
+                    break;
+                case nameof(SystemRole.Teacher):
+                    <span class="badge badge-violet"><icon name="book-open" size="sm" /> GVCN (Khối 1)</span>
+                    break;
+                case nameof(SystemRole.Office):
+                    <span class="badge badge-amber"><icon name="file-text" size="sm" /> Giáo vụ</span>
+                    break;
+                case nameof(SystemRole.Service):
+                    <span class="badge badge-pink"><icon name="utensils" size="sm" /> Nhân viên bếp</span>
+                    break;
+                case nameof(SystemRole.Board):
+                    <span class="badge badge-slate"><icon name="shield" size="sm" /> Ban Giám hiệu</span>
+                    break;
+                case nameof(SystemRole.Admin):
+                    <span class="badge badge-danger"><icon name="settings" size="sm" /> Quản trị viên</span>
+                    break;
+                default:
+                    <span class="badge badge-slate">Người dùng</span>
+                    break;
+            }
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        @if (role == nameof(SystemRole.Parent))
+        {
+            <a href="/Parent/Index" class="nav-item @(IsActive("/Parent/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Tổng quan</span>
+            </a>
+            <a href="/Parent/Children/Index" class="nav-item @(IsActive("/Parent/Children") ? "active" : "")">
+                <icon name="user" size="sm" /> <span>Hồ sơ con</span>
+            </a>
+            <a href="/Parent/Attendance/Index" class="nav-item @(IsActive("/Parent/Attendance") ? "active" : "")">
+                <icon name="calendar" size="sm" /> <span>Điểm danh</span>
+            </a>
+            <a href="/Parent/Lunch/Index" class="nav-item @(IsActive("/Parent/Lunch") ? "active" : "")">
+                <icon name="utensils" size="sm" /> <span>Ăn trưa bán trú</span>
+            </a>
+            <a href="/Parent/Schedule/Index" class="nav-item @(IsActive("/Parent/Schedule") ? "active" : "")">
+                <icon name="clock" size="sm" /> <span>Thời khóa biểu</span>
+            </a>
+            <a href="/Parent/Requests/Index" class="nav-item @(IsActive("/Parent/Requests") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Đơn từ & Yêu cầu</span>
+            </a>
+        }
+        else if (role == nameof(SystemRole.Teacher))
+        {
+            <a href="/Teacher/Index" class="nav-item @(IsActive("/Teacher/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Tổng quan lớp</span>
+            </a>
+            <a href="/Teacher/Attendance/Index" class="nav-item @(IsActive("/Teacher/Attendance") ? "active" : "")">
+                <icon name="calendar" size="sm" /> <span>Điểm danh hôm nay</span>
+            </a>
+            <a href="/Teacher/Class/Roster" class="nav-item @(IsActive("/Teacher/Class/Roster") ? "active" : "")">
+                <icon name="users" size="sm" /> <span>Danh sách học sinh</span>
+            </a>
+            <a href="/Teacher/Class/Schedule" class="nav-item @(IsActive("/Teacher/Class/Schedule") ? "active" : "")">
+                <icon name="clock" size="sm" /> <span>Thời khóa biểu</span>
+            </a>
+            <a href="/Teacher/Leave/Index" class="nav-item @(IsActive("/Teacher/Leave") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Duyệt nghỉ học</span>
+            </a>
+            <a href="/Teacher/Lunch/Index" class="nav-item @(IsActive("/Teacher/Lunch") ? "active" : "")">
+                <icon name="utensils" size="sm" /> <span>Danh sách ăn trưa</span>
+            </a>
+        }
+        else if (role == nameof(SystemRole.Office))
+        {
+            <a href="/Office/Index" class="nav-item @(IsActive("/Office/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Tổng quan</span>
+            </a>
+            <a href="/Office/Students/Index" class="nav-item @(IsActive("/Office/Students") ? "active" : "")">
+                <icon name="users" size="sm" /> <span>Hồ sơ học sinh</span>
+            </a>
+            <a href="/Office/Classes/Index" class="nav-item @(IsActive("/Office/Classes") ? "active" : "")">
+                <icon name="book-open" size="sm" /> <span>Lớp học & Năm học</span>
+            </a>
+            <a href="/Office/Attendance/Index" class="nav-item @(IsActive("/Office/Attendance") ? "active" : "")">
+                <icon name="calendar" size="sm" /> <span>Điều chỉnh điểm danh</span>
+            </a>
+            <a href="/Office/Requests/Transfers" class="nav-item @(IsActive("/Office/Requests/Transfers") ? "active" : "")">
+                <icon name="refresh-cw" size="sm" /> <span>Đơn chuyển lớp</span>
+            </a>
+            <a href="/Office/Requests/Documents" class="nav-item @(IsActive("/Office/Requests/Documents") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Cấp phát tài liệu</span>
+            </a>
+            <a href="/Office/Calendar/Index" class="nav-item @(IsActive("/Office/Calendar") ? "active" : "")">
+                <icon name="clock" size="sm" /> <span>Lịch trường & Nghỉ lễ</span>
+            </a>
+        }
+        else if (role == nameof(SystemRole.Service))
+        {
+            <a href="/Service/Index" class="nav-item @(IsActive("/Service/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Tổng quan bếp</span>
+            </a>
+            <a href="/Service/Lunch/Daily" class="nav-item @(IsActive("/Service/Lunch/Daily") ? "active" : "")">
+                <icon name="utensils" size="sm" /> <span>Danh sách & Suất ăn</span>
+            </a>
+            <a href="/Service/Lunch/Menu" class="nav-item @(IsActive("/Service/Lunch/Menu") ? "active" : "")">
+                <icon name="calendar" size="sm" /> <span>Lịch ăn & Thực đơn</span>
+            </a>
+            <a href="/Service/Lunch/Reports" class="nav-item @(IsActive("/Service/Lunch/Reports") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Báo cáo suất ăn</span>
+            </a>
+        }
+        else if (role == nameof(SystemRole.Board))
+        {
+            <a href="/Board/Index" class="nav-item @(IsActive("/Board/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Bảng điều khiển BGH</span>
+            </a>
+            <a href="/Board/Requests/Leave" class="nav-item @(IsActive("/Board/Requests/Leave") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Duyệt đơn nghỉ học</span>
+            </a>
+            <a href="/Board/Requests/Transfers" class="nav-item @(IsActive("/Board/Requests/Transfers") ? "active" : "")">
+                <icon name="refresh-cw" size="sm" /> <span>Duyệt chuyển lớp</span>
+            </a>
+            <a href="/Board/Reports/Index" class="nav-item @(IsActive("/Board/Reports") ? "active" : "")">
+                <icon name="book-open" size="sm" /> <span>Báo cáo toàn trường</span>
+            </a>
+            <a href="/Board/Announcements/Index" class="nav-item @(IsActive("/Board/Announcements") ? "active" : "")">
+                <icon name="bell" size="sm" /> <span>Thông báo nhà trường</span>
+            </a>
+        }
+        else if (role == nameof(SystemRole.Admin))
+        {
+            <a href="/Admin/Index" class="nav-item @(IsActive("/Admin/Index") ? "active" : "")">
+                <icon name="home" size="sm" /> <span>Tổng quan hệ thống</span>
+            </a>
+            <a href="/Admin/Users/Index" class="nav-item @(IsActive("/Admin/Users") ? "active" : "")">
+                <icon name="users" size="sm" /> <span>Tài khoản người dùng</span>
+            </a>
+            <a href="/Admin/Roles/Index" class="nav-item @(IsActive("/Admin/Roles") ? "active" : "")">
+                <icon name="shield" size="sm" /> <span>Vai trò & Quyền hạn</span>
+            </a>
+            <a href="/Admin/ReferenceData/Index" class="nav-item @(IsActive("/Admin/ReferenceData") ? "active" : "")">
+                <icon name="file-text" size="sm" /> <span>Dữ liệu danh mục</span>
+            </a>
+            <a href="/Admin/Settings/Index" class="nav-item @(IsActive("/Admin/Settings") ? "active" : "")">
+                <icon name="settings" size="sm" /> <span>Cấu hình hệ thống</span>
+            </a>
+            <a href="/Admin/EmailOutbox/Index" class="nav-item @(IsActive("/Admin/EmailOutbox") ? "active" : "")">
+                <icon name="mail" size="sm" /> <span>Hộp thư giả lập / OTP</span>
+            </a>
+            <a href="/Admin/Audit/Index" class="nav-item @(IsActive("/Admin/Audit") ? "active" : "")">
+                <icon name="lock" size="sm" /> <span>Nhật ký kiểm toán</span>
+            </a>
+        }
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-snippet">
+            <div class="user-avatar">
+                @(CurrentUser.FullName?.FirstOrDefault() ?? 'U')
+            </div>
+            <div class="user-meta">
+                <div class="user-name">@CurrentUser.FullName</div>
+                <div class="user-role-label">@role</div>
+            </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <a href="/Account/Profile" class="btn btn-sm btn-outline" style="flex:1;">
+                <icon name="user" size="sm" /> Hồ sơ
+            </a>
+            <form method="post" asp-page="/Account/Logout" style="margin:0;">
+                <button type="submit" class="btn btn-sm btn-ghost" title="Đăng xuất">
+                    <icon name="log-out" size="sm" tone="danger" />
+                </button>
+            </form>
+        </div>
+    </div>
+</aside>

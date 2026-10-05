@@ -1,0 +1,150 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan Phụ huynh";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Cổng thông tin Phụ huynh</h1>
+        <div class="page-subtitle">Xin chào <strong>@CurrentUser.FullName</strong>, theo dõi tình hình học tập và đăng ký dịch vụ cho các con</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Parent/Requests/Index" class="btn btn-success">
+            <icon name="plus" size="sm" /> Tạo đơn / Yêu cầu mới
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="stat-sticker stat-sticker-mint">
+        <icon name="users" shape="circle" tone="mint" size="lg" />
+        <div>
+            <div class="stat-val text-mint">@Model.Children.Count</div>
+            <div class="stat-label">Học sinh theo học</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-pink">
+        <icon name="utensils" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val text-danger">@Model.TodayLunchList.Count(l => l.Status == LunchRegistrationStatus.Registered)</div>
+            <div class="stat-label">Suất ăn đăng ký hôm nay</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-amber">
+        <icon name="file-text" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val text-warning">@Model.RecentRequests.Count(r => r.Status is RequestStatus.Submitted or RequestStatus.InReview or RequestStatus.Escalated)</div>
+            <div class="stat-label">Đơn từ đang xử lý</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+    <!-- Linked Children List -->
+    <div class="sticker-card">
+        <div class="card-header bg-lavender-subtle">
+            <h3 class="card-title">
+                <icon name="user" shape="squircle" tone="mint" size="md" /> Danh sách con cái (UC-06)
+            </h3>
+            <span class="badge badge-solid-mint">@Model.Children.Count con</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem;">
+            @foreach (var child in Model.Children)
+            {
+                var activeCls = child.ClassAssignments.FirstOrDefault()?.Class;
+                var hasLunch = Model.TodayLunchList.Any(l => l.StudentId == child.Id && l.Status == LunchRegistrationStatus.Registered);
+
+                <div class="sticker-card" style="padding: 1.25rem; background: #FFFFFF;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                        <div>
+                            <h4 style="font-size: 1.15rem; margin-bottom: 0.2rem;">@child.FullName</h4>
+                            <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                                Mã HS: <code>@child.StudentCode</code> · Sinh ngày: @Model.FormatDate(child.DateOfBirth)
+                            </div>
+                        </div>
+                        @if (activeCls != null)
+                        {
+                            <span class="badge badge-solid-violet">Lớp @activeCls.Name</span>
+                        }
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; font-size: 0.85rem;">
+                        <span>Ăn trưa hôm nay:</span>
+                        @if (hasLunch)
+                        {
+                            <span class="badge badge-mint"><icon name="check" size="sm" /> Đã đăng ký</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-slate">Chưa đăng ký</span>
+                        }
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <a href="/Parent/Attendance/Index" class="btn btn-sm btn-soft-violet">
+                            <icon name="calendar" size="sm" /> Điểm danh
+                        </a>
+                        <a href="/Parent/Lunch/Index" class="btn btn-sm btn-soft-mint">
+                            <icon name="utensils" size="sm" /> Đăng ký ăn trưa
+                        </a>
+                        <a href="/Parent/Schedule/Index" class="btn btn-sm btn-soft-sky">
+                            <icon name="clock" size="sm" /> Thời khóa biểu
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Requests -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="file-text" shape="squircle" tone="amber" size="md" /> Yêu cầu & Đơn từ gần đây (UC-43)
+            </h3>
+            <a href="/Parent/Requests/Index" style="font-size: 0.85rem;">Xem tất cả &rarr;</a>
+        </div>
+
+        @if (Model.RecentRequests.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach (var req in Model.RecentRequests)
+                {
+                    <div style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <span style="font-weight: 700; font-size: 0.95rem;">
+                                @(req.RequestType == RequestType.Leave ? "Đơn xin nghỉ học" : req.RequestType == RequestType.ClassTransfer ? "Đơn xin chuyển lớp" : "Yêu cầu cấp giấy tờ")
+                            </span>
+                            <span class="badge @(req.Status == RequestStatus.Approved ? "badge-mint" : req.Status == RequestStatus.Rejected ? "badge-danger" : "badge-amber")">
+                                @req.Status
+                            </span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                            Học sinh: <strong>@req.Student.FullName</strong> · Mã: <code>@req.RequestCode</code> · Ngày gửi: @Model.FormatDate(req.SubmittedAt)
+                        </div>
+                        @if (!string.IsNullOrEmpty(req.Notes))
+                        {
+                            <div style="font-size: 0.85rem; margin-top: 0.25rem;">
+                                Ghi chú: @req.Notes
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Chưa có đơn từ nào</div>
+                <div class="empty-desc">Bạn có thể nộp đơn xin nghỉ học, đăng ký chuyển lớp hoặc xin cấp giấy tờ tại đây.</div>
+                <a href="/Parent/Requests/Index" class="btn btn-candy btn-sm">Tạo yêu cầu mới</a>
+            </div>
+        }
+    </div>
+</div>

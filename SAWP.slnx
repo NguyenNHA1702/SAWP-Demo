@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SAWP.Web/SAWP.Web.csproj" />
+  </Folder>
+</Solution>

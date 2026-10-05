@@ -1,0 +1,109 @@
+@page
+@model SAWP.Web.Pages.Admin.Roles.IndexModel
+@{
+    ViewData["Title"] = "Quản lý vai trò & quyền hạn";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Vai trò & Quyền hạn</span>
+        </div>
+        <h1 class="page-title">Quản lý vai trò & phân quyền truy cập</h1>
+        <p class="text-muted">Thiết lập ma trận quyền hạn chi tiết theo từng vai trò chức năng (UC-54, BR-04)</p>
+    </div>
+</div>
+
+<div class="grid grid-2" style="grid-template-columns: 1fr 2.5fr; gap: var(--space-6); align-items: start;">
+    <!-- Left: Role selection list -->
+    <div class="app-card">
+        <div class="card-header bg-light">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="shield" class="text-primary" /> Các vai trò (@Model.Roles.Count)
+            </h2>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group">
+                @foreach (var r in Model.Roles)
+                {
+                    var isSelected = r.Id == Model.SelectedRole?.Id;
+                    <a asp-page="/Admin/Roles/Index" asp-route-selectedRoleId="@r.Id" class="p-3 d-flex justify-between align-center border-bottom text-decoration-none @(isSelected ? "bg-lavender-subtle font-bold" : "")" style="color: inherit;">
+                        <div>
+                            <div class="text-base text-primary">@r.DisplayName</div>
+                            <div class="text-xs text-muted">Mã: @r.Name</div>
+                        </div>
+                        <span class="badge @(isSelected ? "badge-primary" : "badge-subtle")">
+                            @r.UserCount người
+                        </span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Permissions matrix -->
+    <div class="app-card">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <div>
+                <h2 class="card-title text-base font-semibold d-flex align-center gap-2 text-primary">
+                    <icon name="lock" /> Quyền hạn của: @Model.SelectedRole?.DisplayName (@Model.SelectedRole?.Name)
+                </h2>
+                <div class="text-xs text-muted">@(Model.SelectedRole?.Description ?? "Vai trò tiêu chuẩn trong hệ thống SAWP")</div>
+            </div>
+            <span class="badge badge-purple">
+                Đã gán @Model.SelectedRole?.AssignedPermissionIds.Count quyền
+            </span>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="UpdatePermissions">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="roleId" value="@Model.SelectedRole?.Id" />
+
+                @foreach (var group in Model.PermissionGroups)
+                {
+                    <div class="mb-5 pb-3 border-bottom">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <h3 class="font-bold text-sm text-secondary uppercase d-flex align-center gap-2 mb-0">
+                                <icon name="layers" size="xs" /> Phân hệ: @group.Module
+                            </h3>
+                            <button type="button" class="btn btn-ghost btn-xs text-xs" onclick="toggleGroupCheckboxes('@group.Module.Replace(" ", "_")')">
+                                Chọn / Bỏ tất cả
+                            </button>
+                        </div>
+
+                        <div class="grid grid-2 gap-2">
+                            @foreach (var p in group.Permissions)
+                            {
+                                var isChecked = Model.SelectedRole?.AssignedPermissionIds.Contains(p.Id) == true;
+                                <label class="d-flex align-center gap-2 p-2 rounded hover-bg cursor-pointer text-sm mb-0">
+                                    <input type="checkbox" name="permissionIds" value="@p.Id" class="perm-cb-@group.Module.Replace(" ", "_")" @(isChecked ? "checked" : "") />
+                                    <div>
+                                        <div class="font-medium">@p.Name</div>
+                                        <div class="text-xs text-muted font-mono">@p.Code</div>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="d-flex justify-end gap-3 pt-3">
+                    <button type="submit" class="btn btn-candy">
+                        <icon name="check" /> Lưu cập nhật quyền hạn (MSG40)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleGroupCheckboxes(groupId) {
+            const boxes = document.querySelectorAll('.perm-cb-' + groupId);
+            const anyUnchecked = Array.from(boxes).some(b => !b.checked);
+            boxes.forEach(b => b.checked = anyUnchecked);
+        }
+    </script>
+}

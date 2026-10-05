@@ -1,0 +1,244 @@
+@page
+@model SAWP.Web.Pages.Parent.Lunch.IndexModel
+@{
+    ViewData["Title"] = "Ăn trưa bán trú";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Parent/Index">Trang chính</a> &rsaquo; 
+            <span>Ăn trưa bán trú</span>
+        </div>
+        <h1 class="page-title">Ăn trưa bán trú &ndash; @Model.SelectedChild?.FullName</h1>
+        <p class="text-muted">Đăng ký, hủy và theo dõi lịch ăn trưa bán trú của con (UC-29, UC-30, UC-31)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Parent/Requests/CreateLeave" class="btn btn-warning">
+            <icon name="calendar" /> Xin nghỉ học & Hủy ăn tự động
+        </a>
+    </div>
+</div>
+
+<!-- Child & Month Switcher Bar -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-4 align-center flex-wrap">
+            @if (Model.Children.Count > 1)
+            {
+                <div class="form-group mb-0" style="min-width: 220px;">
+                    <label class="form-label text-xs mb-1">Chọn con / học sinh</label>
+                    <select asp-for="ChildId" class="form-control form-control-sm" onchange="this.form.submit()">
+                        @foreach (var child in Model.Children)
+                        {
+                            var cls = child.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                            <option value="@child.Id">@child.FullName@(string.IsNullOrEmpty(cls) ? "" : $" (Lớp {cls})")</option>
+                        }
+                    </select>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="ChildId" />
+            }
+
+            <div class="form-group mb-0" style="min-width: 140px;">
+                <label class="form-label text-xs mb-1">Tháng</label>
+                <select asp-for="Month" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">Tháng @m</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 130px;">
+                <label class="form-label text-xs mb-1">Năm</label>
+                <select asp-for="Year" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int y = 2024; y <= 2027; y++)
+                    {
+                        <option value="@y">Năm @y</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <icon name="refresh-cw" /> Xem lịch ăn
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stat Stickers -->
+<div class="grid grid-3 gap-4 mb-6">
+    <div class="stat-sticker stat-sticker-violet">
+        <div class="stat-icon bg-lavender-subtle">
+            <icon name="utensils" class="text-primary" />
+        </div>
+        <div>
+            <div class="stat-label">Tổng suất ăn đăng ký</div>
+            <div class="stat-value text-primary">@Model.TotalRegisteredMeals <span class="text-xs font-normal text-muted">bữa</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-mint">
+        <div class="stat-icon bg-mint-subtle">
+            <icon name="dollar-sign" class="text-mint" />
+        </div>
+        <div>
+            <div class="stat-label">Tạm tính tiền ăn tháng @Model.Month</div>
+            <div class="stat-value font-mono text-mint">@Model.TotalEstimatedFee.ToString("N0") <span class="text-xs font-normal text-muted">VNĐ</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-amber">
+        <div class="stat-icon bg-peach-subtle">
+            <icon name="clock" class="text-warning" />
+        </div>
+        <div>
+            <div class="stat-label">Quy định hạn chốt ngày (BR-28)</div>
+            <div class="stat-value text-base font-semibold text-warning" style="margin-top: 4px;">Trước 08:00 sáng</div>
+        </div>
+    </div>
+</div>
+
+<!-- Cutoff rule alert box -->
+<div class="alert-box alert-info mb-6">
+    <icon name="info" class="text-info" />
+    <div class="text-sm">
+        <strong>Quy định bán trú & hạn chốt đăng ký (BR-28, BR-29):</strong>
+        Phụ huynh có thể chủ động đăng ký hoặc hủy suất ăn trước <strong>08:00 sáng</strong> của ngày phục vụ. Sau giờ này, hệ thống sẽ chốt danh sách để bộ phận bếp chuẩn bị nguyên liệu thực phẩm. Nếu con nghỉ học có đơn xin phép được phê duyệt trước giờ chốt, hệ thống sẽ <strong>tự động hủy suất ăn</strong> tương ứng (BR-29).
+    </div>
+</div>
+
+<!-- Monthly Lunch Calendar / Service Days List -->
+<div class="app-card">
+    <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="calendar" class="text-primary" /> Lịch ăn bán trú Tháng @Model.Month/@Model.Year
+        </h2>
+        <span class="badge badge-solid-amber">Giá tiêu chuẩn: 35.000 VNĐ / suất</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-pop">
+            <thead>
+                <tr>
+                    <th style="min-width: 140px;">Ngày phục vụ</th>
+                    <th>Thực đơn dự kiến</th>
+                    <th class="text-center">Đơn giá</th>
+                    <th class="text-center">Hạn chốt</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-right" style="min-width: 170px;">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var day in Model.DayItems)
+                {
+                    var isToday = day.Date.Date == Model.Clock.Today;
+                    var dayName = day.Date.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"));
+
+                    <tr style="@(isToday ? "background-color: #FEF9C3;" : "")">
+                        <td>
+                            <div class="font-semibold text-base">@day.Date.ToString("dd/MM/yyyy")</div>
+                            <span class="text-xs text-muted text-capitalize">@dayName</span>
+                            @if (isToday)
+                            {
+                                <span class="badge badge-warning text-xs ml-1">Hôm nay</span>
+                            }
+                        </td>
+                        <td class="text-sm" style="max-width: 320px;">
+                            @if (day.IsAvailable)
+                            {
+                                <div>@(day.MenuDescription ?? "Thực đơn dinh dưỡng tiêu chuẩn")</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted font-italic">Không tổ chức bán trú ngày này</span>
+                            }
+                            @if (!string.IsNullOrEmpty(day.Note))
+                            {
+                                <div class="text-xs text-secondary mt-1"><em>Ghi chú: @day.Note</em></div>
+                            }
+                        </td>
+                        <td class="text-center font-mono text-sm">
+                            @day.Price.ToString("N0") đ
+                        </td>
+                        <td class="text-center text-sm">
+                            <span class="font-mono">@day.CutoffTime.ToString(@"hh\:mm")</span>
+                            <div>
+                                @if (day.IsPastCutoff)
+                                {
+                                    <span class="badge badge-danger text-xs"><icon name="lock" /> Đã chốt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-mint text-xs"><icon name="unlock" /> Mở nhận</span>
+                                }
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            @if (day.IsRegistered)
+                            {
+                                <span class="badge badge-success">
+                                    <icon name="check-circle" /> Đã đăng ký
+                                </span>
+                            }
+                            else if (day.IsCancelled)
+                            {
+                                <span class="badge badge-warning">
+                                    <icon name="slash" /> Đã hủy
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-subtle">
+                                    Chưa đăng ký
+                                </span>
+                            }
+                        </td>
+                        <td class="text-right">
+                            @if (!day.IsAvailable)
+                            {
+                                <span class="text-muted text-xs">Không phục vụ</span>
+                            }
+                            else if (day.IsPastCutoff)
+                            {
+                                <span class="text-muted text-xs" title="Đã quá hạn chốt lúc @day.CutoffTime.ToString(@"hh\:mm")">
+                                    <icon name="lock" /> Hết hạn thao tác
+                                </span>
+                            }
+                            else
+                            {
+                                @if (day.IsRegistered)
+                                {
+                                    <form method="post" asp-page-handler="Cancel" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy suất ăn trưa ngày @day.Date.ToString("dd/MM/yyyy") cho con?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="studentId" value="@Model.SelectedChild?.Id" />
+                                        <input type="hidden" name="registrationId" value="@day.RegistrationId" />
+                                        <button type="submit" class="btn btn-outline-danger btn-xs">
+                                            <icon name="x" /> Hủy suất ăn
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="Register" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="studentId" value="@Model.SelectedChild?.Id" />
+                                        <input type="hidden" name="lunchServiceDayId" value="@day.LunchServiceDayId" />
+                                        <button type="submit" class="btn btn-candy btn-xs">
+                                            <icon name="plus" /> Đăng ký ăn
+                                        </button>
+                                    </form>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

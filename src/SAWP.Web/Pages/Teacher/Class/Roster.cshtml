@@ -1,0 +1,61 @@
+@page
+@model RosterModel
+@{
+    ViewData["Title"] = $"Danh sách học sinh Lớp {Model.AssignedClass?.Name}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Danh sách Học sinh Lớp @Model.AssignedClass?.Name (UC-17)</h1>
+        <div class="page-subtitle">Sĩ số: <strong>@Model.Students.Count học sinh</strong> (Tối đa: @Model.AssignedClass?.Capacity) · GVCN: cô <strong>@CurrentUser.FullName</strong></div>
+    </div>
+    <div class="page-actions">
+        <a href="/Teacher/Attendance/Index" class="btn btn-candy">
+            <icon name="calendar" size="sm" /> Điểm danh lớp ngay
+        </a>
+    </div>
+</div>
+
+<div class="table-container">
+    @if (Model.Students.Any())
+    {
+        <table class="table-pop">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">STT</th>
+                    <th>Mã học sinh</th>
+                    <th>Họ và tên</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Phụ huynh liên hệ</th>
+                    <th>SĐT Liên hệ</th>
+                    <th>Ghi chú sức khỏe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Students)
+                {
+                    <tr>
+                        <td><strong>@(s.RollNumber?.ToString("D2") ?? "-")</strong></td>
+                        <td><code>@s.StudentCode</code></td>
+                        <td><strong>@s.FullName</strong></td>
+                        <td>@(s.Gender == Gender.Male ? "Nam" : "Nữ")</td>
+                        <td>@Model.FormatDate(s.DateOfBirth)</td>
+                        <td>@s.PrimaryGuardianName</td>
+                        <td><code>@s.PrimaryGuardianPhone</code></td>
+                        <td style="font-size: 0.85rem; color: var(--fg-muted);">@s.HealthNotes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <icon name="users" tone="slate" size="xl" class="empty-icon" />
+            <div class="empty-title">Chưa có học sinh nào trong lớp</div>
+            <div class="empty-desc">Phòng Giáo vụ sẽ phân công học sinh vào lớp học của bạn.</div>
+        </div>
+    }
+</div>

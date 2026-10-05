@@ -1,0 +1,194 @@
+@page
+@model DetailModel
+@{
+    ViewData["Title"] = $"Hồ sơ: {Model.Student.FullName}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Students/Index" style="font-size:0.85rem; color:var(--fg-muted);">Hồ sơ học sinh</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Chi tiết</span>
+        </div>
+        <h1 class="page-title">Hồ sơ Học sinh: @Model.Student.FullName</h1>
+        <div class="page-subtitle">Mã định danh: <code>@Model.Student.StudentCode</code> · Trạng thái: <span class="badge badge-mint">@Model.Student.Status</span></div>
+    </div>
+    <div class="page-actions" style="display:flex; gap:0.5rem;">
+        <a href="/Office/Students/Edit?id=@Model.Student.Id" class="btn btn-outline">
+            <icon name="edit" size="sm" /> Chỉnh sửa (UC-08)
+        </a>
+        <a href="/Office/Students/Guardians?id=@Model.Student.Id" class="btn btn-outline">
+            <icon name="users" size="sm" /> Quản lý phụ huynh (UC-10)
+        </a>
+        <a href="/Office/Students/History?id=@Model.Student.Id" class="btn btn-candy">
+            <icon name="clock" size="sm" /> Lịch sử hành chính (UC-12)
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="book-open" shape="circle" tone="violet" size="lg" />
+        <div>
+            <div class="stat-val" style="font-size:1.6rem;">
+                @(Model.CurrentClass != null ? $"Lớp {Model.CurrentClass.Name}" : "Chưa phân lớp")
+            </div>
+            <div class="stat-label">Lớp học hiện tại</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="calendar" shape="circle" tone="mint" size="lg" />
+        <div>
+            <div class="stat-val">@Model.PresentDays / @Model.TotalAttendanceDays</div>
+            <div class="stat-label">Buổi có mặt</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="utensils" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalLunchMeals</div>
+            <div class="stat-label">Suất ăn bán trú</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="file-text" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val">@Model.Requests.Count</div>
+            <div class="stat-label">Yêu cầu / Đơn từ</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Personal Information Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="user" shape="squircle" tone="violet" size="md" /> Thông tin cá nhân & Hành chính
+            </h3>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.95rem;">
+            <div><strong>Họ và tên:</strong> @Model.Student.FullName</div>
+            <div><strong>Mã học sinh:</strong> <code>@Model.Student.StudentCode</code></div>
+            <div><strong>Ngày sinh:</strong> @Model.FormatDate(Model.Student.DateOfBirth)</div>
+            <div><strong>Giới tính:</strong> @(Model.Student.Gender == Gender.Male ? "Nam" : Model.Student.Gender == Gender.Female ? "Nữ" : "Khác")</div>
+            <div><strong>Ngày nhập học:</strong> @Model.FormatDate(Model.Student.AdmissionDate)</div>
+            <div><strong>Nơi sinh:</strong> @(Model.Student.PlaceOfBirth ?? "Chưa cập nhật")</div>
+            <div><strong>Địa chỉ thường trú:</strong> @(Model.Student.Address ?? "Chưa cập nhật")</div>
+            <div><strong>Ghi chú y tế / Dị ứng:</strong> @(Model.Student.HealthNotes ?? "Không có ghi nhận đặc biệt")</div>
+        </div>
+    </div>
+
+    <!-- Guardians Information Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="users" shape="squircle" tone="mint" size="md" /> Người giám hộ & Phụ huynh
+            </h3>
+            <a href="/Office/Students/Guardians?id=@Model.Student.Id" class="btn btn-sm btn-outline">+ Thêm liên kết</a>
+        </div>
+
+        @if (Model.Guardians.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach (var g in Model.Guardians)
+                {
+                    <div style="padding: 1rem; border: var(--border-solid); border-radius: var(--radius-md); background-color: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <div style="font-weight: 700; font-size: 1rem;">@g.Guardian.FullName</div>
+                            @if (g.IsPrimaryContact)
+                            {
+                                <span class="badge badge-mint">Liên hệ chính</span>
+                            }
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                            Quan hệ: <strong>@(g.Relationship == GuardianRelationship.Father ? "Bố" : g.Relationship == GuardianRelationship.Mother ? "Mẹ" : "Người giám hộ")</strong> · 
+                            SĐT: <code>@g.Guardian.PhoneNumber</code>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--fg-muted); margin-top: 0.2rem;">
+                            Email: @(g.Guardian.Email ?? "Chưa cập nhật") · Đưa đón: @(g.CanPickup ? "Được phép" : "Không")
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Chưa liên kết phụ huynh</div>
+                <div class="empty-desc">Học sinh chưa có thông tin phụ huynh/người giám hộ nào.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Class History Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="book-open" shape="squircle" tone="amber" size="md" /> Lịch sử phân lớp (BR-18)
+            </h3>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            @foreach (var ca in Model.ClassHistory)
+            {
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm); background: #FFFFFF;">
+                    <div>
+                        <div style="font-weight: 700;">Lớp @ca.Class.Name (Khối @ca.Class.Grade)</div>
+                        <div style="font-size: 0.8rem; color: var(--fg-muted);">
+                            Từ ngày: @Model.FormatDate(ca.StartDate) @(ca.EndDate.HasValue ? $"đến {Model.FormatDate(ca.EndDate.Value)}" : "(Hiện tại)")
+                        </div>
+                    </div>
+                    @if (ca.IsActive)
+                    {
+                        <span class="badge badge-mint">Lớp hiện tại</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-slate">Đã hoàn thành</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Requests History Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="file-text" shape="squircle" tone="pink" size="md" /> Đơn từ & Yêu cầu hành chính
+            </h3>
+        </div>
+
+        @if (Model.Requests.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                @foreach (var r in Model.Requests)
+                {
+                    <div style="padding: 0.75rem 1rem; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm); background: #FFFFFF;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 700;"><code>@r.RequestCode</code></span>
+                            <span class="badge badge-amber">@r.Status</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--fg-muted); margin-top: 0.2rem;">
+                            Loại: @(r.RequestType == RequestType.Leave ? "Xin nghỉ học" : r.RequestType == RequestType.ClassTransfer ? "Chuyển lớp" : "Cấp giấy tờ") · Ngày gửi: @Model.FormatDate(r.SubmittedAt)
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="color: var(--fg-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem;">
+                Chưa có yêu cầu hành chính nào được gửi cho học sinh này.
+            </div>
+        }
+    </div>
+</div>

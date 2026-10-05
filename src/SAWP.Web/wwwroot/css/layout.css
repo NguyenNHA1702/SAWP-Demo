@@ -1,0 +1,228 @@
+/* ==========================================================================
+   Playful Geometric Layout Styles
+   ========================================================================== */
+
+/* --- Public Header & Layout --- */
+.public-header {
+  background-color: var(--bg-surface);
+  border-bottom: var(--border-solid);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--fg-main);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand-badge {
+  background-color: var(--accent-violet);
+  color: #FFFFFF;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-dark);
+}
+
+.public-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.public-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  flex: 1;
+  width: 100%;
+}
+
+/* --- App Shell (Sidebar + Main Content) --- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 270px;
+  min-width: 270px;
+  max-width: 270px;
+  background-color: var(--bg-surface);
+  border-right: var(--border-solid);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1.5rem 1.25rem;
+  border-bottom: var(--border-solid);
+}
+
+.sidebar-role-badge {
+  margin-top: 0.6rem;
+  display: inline-flex;
+}
+
+.sidebar-nav {
+  padding: 1.25rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  color: var(--fg-main);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 2px solid transparent;
+  transition: all var(--transition-bounce);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background-color: var(--accent-violet-light);
+  border-color: var(--border-dark);
+  transform: translateX(4px);
+  color: var(--accent-violet);
+}
+
+.nav-item.active {
+  background-color: var(--accent-violet);
+  color: #FFFFFF;
+  border-color: var(--border-dark);
+  box-shadow: 3px 3px 0px var(--border-dark);
+}
+
+.nav-item.active .sawp-icon-wrap {
+  color: #FFFFFF;
+}
+
+.sidebar-footer {
+  padding: 1.25rem;
+  border-top: var(--border-solid);
+  background-color: #F8FAFC;
+}
+
+.user-snippet {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-dark);
+  background-color: var(--tertiary-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-family: var(--font-heading);
+}
+
+.user-meta {
+  overflow: hidden;
+}
+.user-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.user-role-label {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+/* --- Main Viewport --- */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--bg-main);
+}
+
+.app-topbar {
+  background-color: var(--bg-surface);
+  border-bottom: var(--border-solid);
+  padding: 0.85rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+/* --- Public Footer --- */
+.public-footer {
+  border-top: var(--border-solid);
+  background-color: var(--bg-surface);
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: var(--border-solid);
+  }
+  .app-content {
+    padding: 1.25rem;
+  }
+}

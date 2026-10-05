@@ -1,0 +1,143 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Điều chỉnh điểm danh";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Điều chỉnh Điểm danh sau Khóa sổ (UC-22)</h1>
+        <div class="page-subtitle">Thẩm quyền của Giáo vụ điều chỉnh điểm danh khi đã hết thời hạn của GVCN; lý do điều chỉnh là bắt buộc (BR-22)</div>
+    </div>
+</div>
+
+<!-- Class & Date Selector -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem;">
+    <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div class="field" style="margin-bottom: 0;">
+            <label class="field-label" for="cSelect">Lớp học</label>
+            <select name="ClassId" id="cSelect" class="select" onchange="this.form.submit();">
+                @foreach (var c in Model.AvailableClasses)
+                {
+                    <!option value="@c.Id" @(c.Id == Model.SelectedClass?.Id ? "selected" : "")>Lớp @c.Name (Khối @c.Grade)</!option>
+                }
+            </select>
+        </div>
+
+        <div class="field" style="margin-bottom: 0;">
+            <label class="field-label" for="dSelect">Ngày điểm danh</label>
+            <input type="date" name="Date" id="dSelect" class="input" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit();" />
+        </div>
+
+        <button type="submit" class="btn btn-candy">Xem bảng điểm danh</button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Attendance Table -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="calendar" shape="squircle" tone="amber" size="md" /> Bảng điểm danh Lớp @Model.SelectedClass?.Name ngày @Model.FormatDate(Model.Date)
+            </h3>
+        </div>
+
+        <div class="table-container">
+            <table class="table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã HS</th>
+                        <th>Họ và tên</th>
+                        <th>Trạng thái</th>
+                        <th>Người ghi nhận</th>
+                        <th>Điều chỉnh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Records)
+                    {
+                        <tr>
+                            <td><code>@r.StudentCode</code></td>
+                            <td><strong>@r.FullName</strong></td>
+                            <td>
+                                <span class="badge @(r.Status == AttendanceStatus.Present ? "badge-mint" : r.Status == AttendanceStatus.Late ? "badge-amber" : "badge-danger")">
+                                    @(r.Status == AttendanceStatus.Present ? "Có mặt" : r.Status == AttendanceStatus.AbsentWithLeave ? "Nghỉ có phép" : r.Status == AttendanceStatus.AbsentWithoutLeave ? "Nghỉ không phép" : "Đi muộn")
+                                </span>
+                            </td>
+                            <td style="font-size: 0.85rem; color: var(--fg-muted);">
+                                @r.MarkedBy
+                                @if (!string.IsNullOrEmpty(r.CorrectedBy))
+                                {
+                                    <div style="color: var(--accent-violet); font-size: 0.8rem; margin-top: 0.15rem;">
+                                        Đã sửa bởi: @r.CorrectedBy (@r.CorrectionReason)
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="openCorrection(@r.StudentId, '@r.FullName', @((int)r.Status));">
+                                    <icon name="edit" size="sm" /> Sửa
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Correction Form Card -->
+    <div class="sticker-card" id="correctionPanel">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="shield" shape="squircle" tone="violet" size="md" /> Điều chỉnh điểm danh (BR-22)
+            </h3>
+        </div>
+
+        <form method="post" asp-page-handler="Correct">
+            <input type="hidden" name="ClassId" value="@Model.ClassId" />
+            <input type="hidden" name="Date" value="@Model.Date.ToString("yyyy-MM-dd")" />
+            <input type="hidden" id="correctStudentId" name="StudentId" value="" />
+
+            <div class="field">
+                <label class="field-label">Học sinh được chọn</label>
+                <input id="correctStudentName" class="input" disabled value="Chọn học sinh từ bảng bên cạnh..." style="background-color:#F8FAFC;" />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="newStat">Trạng thái mới (*)</label>
+                <select id="correctNewStatus" name="NewStatus" class="select">
+                    <option value="1">✓ Có mặt (Present)</option>
+                    <option value="2">P Nghỉ có phép (Absent with leave)</option>
+                    <option value="3">K Nghỉ không phép (Absent without leave)</option>
+                    <option value="4">M Đi muộn (Late)</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="reason">Lý do điều chỉnh (*) (Bắt buộc theo BR-22)</label>
+                <textarea name="CorrectionReason" id="reason" class="textarea" placeholder="Nhập lý do điều chỉnh: phụ huynh gọi điện báo muộn, đơn xin phép bổ sung..." required></textarea>
+                <span class="field-hint">Mọi điều chỉnh sẽ ghi vết kiểm toán (Audit Log) kèm họ tên người thực hiện.</span>
+            </div>
+
+            <button type="submit" class="btn btn-candy btn-lg" style="width: 100%; margin-top: 1rem;">
+                <icon name="check" size="md" /> Lưu điều chỉnh điểm danh
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCorrection(studentId, studentName, currentStatus) {
+            document.getElementById('correctStudentId').value = studentId;
+            document.getElementById('correctStudentName').value = studentName;
+            document.getElementById('correctNewStatus').value = currentStatus;
+            document.getElementById('reason').focus();
+
+            // Highlight panel
+            const panel = document.getElementById('correctionPanel');
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+}

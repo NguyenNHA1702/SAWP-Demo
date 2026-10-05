@@ -1,0 +1,138 @@
+@page
+@model ProfileModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Hồ sơ người dùng</h1>
+        <div class="page-subtitle">Thông tin tài khoản và phân quyền tác nghiệp trong hệ thống</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Account/ChangePassword" class="btn btn-outline">
+            <icon name="lock" size="sm" tone="violet" /> Đổi mật khẩu
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Profile Edit Form -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="edit" shape="squircle" tone="violet" size="md" /> Thông tin cá nhân (UC-03)
+            </h3>
+            <span class="badge badge-slate">@Model.RoleName</span>
+        </div>
+
+        <form method="post">
+            <div class="field">
+                <label class="field-label">Tên đăng nhập</label>
+                <input class="input" value="@Model.Username" disabled style="background-color:#F8FAFC; cursor:not-allowed;" />
+                <span class="field-hint">Tên đăng nhập hệ thống không thể tự thay đổi.</span>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="fullname">Họ và tên</label>
+                <input asp-for="FullName" id="fullname" class="input" required />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="email">Địa chỉ Email</label>
+                <input asp-for="Email" id="email" type="email" class="input" required />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="phone">Số điện thoại liên hệ</label>
+                <input asp-for="PhoneNumber" id="phone" class="input" placeholder="090..." />
+            </div>
+
+            <button type="submit" class="btn btn-candy btn-lg" style="margin-top: 1rem;">
+                <icon name="check" size="md" /> Lưu cập nhật hồ sơ
+            </button>
+        </form>
+    </div>
+
+    <!-- Role-Specific Profile Information -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        @if (Model.GuardianProfile != null)
+        {
+            <!-- Parent / Guardian Information -->
+            <div class="sticker-card" style="background-color: #F0FDF4; border-color: var(--quaternary-mint);">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <icon name="user" shape="squircle" tone="mint" size="md" /> Hồ sơ Phụ huynh & Con cái (UC-02 A1)
+                    </h3>
+                    <span class="badge badge-mint">Phụ huynh</span>
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <div><strong>Số CCCD/Định danh:</strong> @(Model.GuardianProfile.IdentityNumber ?? "Chưa cập nhật")</div>
+                    <div><strong>Địa chỉ cư trú:</strong> @(Model.GuardianProfile.Address ?? "Chưa cập nhật")</div>
+                    <div><strong>Nghề nghiệp:</strong> @(Model.GuardianProfile.Occupation ?? "Chưa cập nhật")</div>
+                </div>
+
+                <h4 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: #047857;">Học sinh đã liên kết:</h4>
+                @if (Model.LinkedChildren.Any())
+                {
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        @foreach (var child in Model.LinkedChildren)
+                        {
+                            var activeCls = child.ClassAssignments.FirstOrDefault()?.Class;
+                            <div class="sticker-card" style="padding: 0.85rem 1rem; background: #FFFFFF;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 700;">@child.FullName</div>
+                                        <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                                            Mã HS: <code>@child.StudentCode</code> · Ngày sinh: @Model.FormatDate(child.DateOfBirth)
+                                        </div>
+                                    </div>
+                                    @if (activeCls != null)
+                                    {
+                                        <span class="badge badge-violet">Lớp @activeCls.Name</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="color: var(--fg-muted); font-size: 0.9rem;">Chưa có học sinh nào được liên kết với hồ sơ này.</div>
+                }
+            </div>
+        }
+
+        @if (Model.Staff != null)
+        {
+            <!-- Staff Information -->
+            <div class="sticker-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <icon name="shield" shape="squircle" tone="amber" size="md" /> Thông tin Cán bộ / Giáo viên
+                    </h3>
+                    <span class="badge badge-amber">Cán bộ</span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div><strong>Mã cán bộ:</strong> <code>@Model.Staff.StaffCode</code></div>
+                    <div><strong>Phòng ban / Tổ chuyên môn:</strong> @Model.Staff.Department</div>
+                    <div><strong>Vị trí / Chức vụ:</strong> @Model.Staff.Position</div>
+                    @if (Model.AssignedClass != null)
+                    {
+                        <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: var(--accent-violet-light); border-radius: var(--radius-sm); border: 1.5px solid var(--accent-violet);">
+                            <div style="font-weight: 700; color: var(--accent-violet);">
+                                <icon name="book-open" size="sm" /> Giáo viên chủ nhiệm Lớp @Model.AssignedClass.Name
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                                Phòng học: @(Model.AssignedClass.RoomNumber ?? "Đang cập nhật") · Sĩ số: @Model.AssignedClass.Capacity
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

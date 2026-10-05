@@ -1,0 +1,370 @@
+@page
+@model SAWP.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Quản lý tài khoản người dùng";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Tài khoản người dùng</span>
+        </div>
+        <h1 class="page-title">Quản lý tài khoản & phân quyền người dùng</h1>
+        <p class="text-muted">Tạo mới, gán vai trò, quản lý trạng thái kích hoạt và liên kết hồ sơ thực tế (UC-53, UC-55, UC-60)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-candy" onclick="openCreateUserModal()">
+            <icon name="user-plus" /> Tạo tài khoản mới
+        </button>
+    </div>
+</div>
+
+<!-- Search & Filter Card -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-3 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 240px; flex: 1;">
+                <label class="form-label text-xs mb-1">Tìm kiếm theo tên / email / tên đăng nhập</label>
+                <input type="text" asp-for="Search" class="form-control form-control-sm" placeholder="Nhập tên đăng nhập hoặc họ tên..." />
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 170px;">
+                <label class="form-label text-xs mb-1">Vai trò hệ thống</label>
+                <select asp-for="RoleFilter" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả vai trò --</option>
+                    @foreach (var r in Model.AvailableRoles)
+                    {
+                        <option value="@r.Name">@r.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 160px;">
+                <label class="form-label text-xs mb-1">Trạng thái tài khoản</label>
+                <select asp-for="StatusFilter" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Active">Đang hoạt động</option>
+                    <option value="Inactive">Đã vô hiệu hóa</option>
+                    <option value="Locked">Bị khóa tạm thời</option>
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    <icon name="search" /> Lọc
+                </button>
+                <a asp-page="/Admin/Users/Index" class="btn btn-ghost btn-sm">Đặt lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users List Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="users" class="text-primary" /> Danh sách người dùng (@Model.Users.Count)
+        </h2>
+    </div>
+
+    @if (!Model.Users.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Không tìm thấy tài khoản người dùng nào phù hợp.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Tên đăng nhập & Họ tên</th>
+                        <th>Thông tin liên hệ</th>
+                        <th>Vai trò</th>
+                        <th>Hồ sơ thực tế (UC-55)</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th>Đăng nhập cuối</th>
+                        <th class="text-right" style="min-width: 200px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="font-bold text-base text-primary">@u.Username</div>
+                                <div class="text-sm font-medium">@u.FullName</div>
+                            </td>
+                            <td class="text-xs text-muted">
+                                <div>@(u.Email ?? "—")</div>
+                                <div>@(u.PhoneNumber ?? "")</div>
+                            </td>
+                            <td>
+                                @foreach (var r in u.Roles)
+                                {
+                                    <span class="badge badge-purple text-xs mr-1">@r</span>
+                                }
+                            </td>
+                            <td class="text-xs">
+                                @if (u.IsStaffLinked)
+                                {
+                                    <span class="badge badge-mint font-semibold"><icon name="briefcase" /> @u.LinkedProfileInfo</span>
+                                }
+                                else if (u.IsGuardianLinked)
+                                {
+                                    <span class="badge badge-candy font-semibold"><icon name="heart" /> @u.LinkedProfileInfo</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa liên kết</span>
+                                    <button type="button" class="btn btn-ghost btn-xs ml-1" onclick="openLinkModal(@u.Id, '@u.Username')">
+                                        <icon name="link" /> Ghép
+                                    </button>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @switch (u.Status)
+                                {
+                                    case SAWP.Web.Domain.UserStatus.Active:
+                                        <span class="badge badge-success"><icon name="check" /> Hoạt động</span>
+                                        break;
+                                    case SAWP.Web.Domain.UserStatus.Inactive:
+                                        <span class="badge badge-secondary"><icon name="slash" /> Vô hiệu</span>
+                                        break;
+                                    case SAWP.Web.Domain.UserStatus.Locked:
+                                        <span class="badge badge-danger"><icon name="lock" /> Bị khóa</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Chưa đăng nhập")
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-1">
+                                    <button type="button" class="btn btn-secondary btn-xs" onclick="openResetPasswordModal(@u.Id, '@u.Username')" title="Đặt lại mật khẩu">
+                                        <icon name="key" /> Đặt lại MK
+                                    </button>
+
+                                    <form method="post" asp-page-handler="ToggleActive" asp-route-id="@u.Id" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái kích hoạt của tài khoản @u.Username? (BR-52)');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn @(u.Status == SAWP.Web.Domain.UserStatus.Active ? "btn-outline-danger" : "btn-candy") btn-xs" title="@(u.Status == SAWP.Web.Domain.UserStatus.Active ? "Vô hiệu hóa" : "Kích hoạt lại")">
+                                            <icon name="@(u.Status == SAWP.Web.Domain.UserStatus.Active ? "user-x" : "user-check")" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Create User -->
+<div id="createUserModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 520px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="user-plus" class="text-primary" /> Tạo tài khoản người dùng mới (UC-53)
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeCreateUserModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="CreateUser">
+                @Html.AntiForgeryToken()
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Tên đăng nhập <span class="text-danger">*</span></label>
+                        <input type="text" name="username" class="form-control form-control-sm" placeholder="vd: gv.nam" required />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Họ và tên đầy đủ <span class="text-danger">*</span></label>
+                        <input type="text" name="fullName" class="form-control form-control-sm" placeholder="vd: Nguyễn Văn Nam" required />
+                    </div>
+                </div>
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control form-control-sm" placeholder="email@@example.com" required />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Số điện thoại</label>
+                        <input type="text" name="phoneNumber" class="form-control form-control-sm" placeholder="09xxxxxxxx" />
+                    </div>
+                </div>
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Mật khẩu khởi tạo <span class="text-danger">*</span></label>
+                        <input type="text" name="password" class="form-control form-control-sm" value="Demo@123" required />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Vai trò hệ thống <span class="text-danger">*</span></label>
+                        <select name="roleId" class="form-control form-control-sm" required>
+                            @foreach (var r in Model.AvailableRoles)
+                            {
+                                <option value="@r.Id">@r.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="alert-box alert-info mb-4 text-xs">
+                    <icon name="info" /> Mật khẩu phải từ 8 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt (BR-02).
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeCreateUserModal()">Hủy</button>
+                    <button type="submit" class="btn btn-candy btn-sm">
+                        <icon name="check" /> Tạo tài khoản
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reset Password -->
+<div id="resetPwdModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 440px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="key" class="text-primary" /> Đặt lại mật khẩu (UC-60)
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeResetPasswordModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="ResetPassword">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="resetUserId" />
+
+                <p class="text-sm mb-3">
+                    Đặt lại mật khẩu cho tài khoản: <strong id="resetUsername" class="text-primary"></strong>.
+                </p>
+
+                <div class="form-group mb-4">
+                    <label class="form-label text-xs">Mật khẩu mới (mặc định Demo@123)</label>
+                    <input type="text" name="newPassword" class="form-control form-control-sm" value="Demo@123" required />
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeResetPasswordModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <icon name="check" /> Đặt lại mật khẩu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Link Profile -->
+<div id="linkProfileModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 480px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="link" class="text-primary" /> Liên kết hồ sơ thực tế (UC-55)
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeLinkModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="LinkProfile">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="userId" id="linkUserId" />
+
+                <p class="text-sm mb-3">
+                    Ghép tài khoản: <strong id="linkUsername" class="text-primary"></strong> với hồ sơ:
+                </p>
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Loại hồ sơ liên kết</label>
+                    <select name="profileType" id="linkProfileType" class="form-control form-control-sm" onchange="toggleProfileOptions()">
+                        <option value="Staff">Cán bộ / Giáo viên (StaffProfile)</option>
+                        <option value="Guardian">Phụ huynh / Người giám hộ (Guardian)</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-4" id="staffOptionsDiv">
+                    <label class="form-label text-xs">Chọn Cán bộ / Giáo viên chưa ghép</label>
+                    <select name="profileId" id="selectStaffId" class="form-control form-control-sm">
+                        @foreach (var s in Model.UnlinkedStaff)
+                        {
+                            <option value="@s.Id">@s.FullName (@s.StaffCode - @s.Position)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group mb-4" id="guardianOptionsDiv" style="display: none;">
+                    <label class="form-label text-xs">Chọn Phụ huynh chưa ghép</label>
+                    <select name="profileId" id="selectGuardianId" class="form-control form-control-sm" disabled>
+                        @foreach (var g in Model.UnlinkedGuardians)
+                        {
+                            <option value="@g.Id">@g.FullName (@g.PhoneNumber)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeLinkModal()">Hủy</button>
+                    <button type="submit" class="btn btn-candy btn-sm">
+                        <icon name="link" /> Xác nhận liên kết
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreateUserModal() {
+            document.getElementById('createUserModal').style.display = 'flex';
+        }
+        function closeCreateUserModal() {
+            document.getElementById('createUserModal').style.display = 'none';
+        }
+
+        function openResetPasswordModal(id, username) {
+            document.getElementById('resetUserId').value = id;
+            document.getElementById('resetUsername').textContent = username;
+            document.getElementById('resetPwdModal').style.display = 'flex';
+        }
+        function closeResetPasswordModal() {
+            document.getElementById('resetPwdModal').style.display = 'none';
+        }
+
+        function openLinkModal(id, username) {
+            document.getElementById('linkUserId').value = id;
+            document.getElementById('linkUsername').textContent = username;
+            document.getElementById('linkProfileModal').style.display = 'flex';
+        }
+        function closeLinkModal() {
+            document.getElementById('linkProfileModal').style.display = 'none';
+        }
+
+        function toggleProfileOptions() {
+            const type = document.getElementById('linkProfileType').value;
+            const staffDiv = document.getElementById('staffOptionsDiv');
+            const guardianDiv = document.getElementById('guardianOptionsDiv');
+            const staffSelect = document.getElementById('selectStaffId');
+            const guardianSelect = document.getElementById('selectGuardianId');
+
+            if (type === 'Staff') {
+                staffDiv.style.display = 'block';
+                guardianDiv.style.display = 'none';
+                staffSelect.disabled = false;
+                guardianSelect.disabled = true;
+            } else {
+                staffDiv.style.display = 'none';
+                guardianDiv.style.display = 'block';
+                staffSelect.disabled = true;
+                guardianSelect.disabled = false;
+            }
+        }
+    </script>
+}

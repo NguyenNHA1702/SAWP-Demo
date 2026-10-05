@@ -1,0 +1,95 @@
+@page
+@model SAWP.Web.Pages.Parent.Requests.CreateDocumentModel
+@{
+    ViewData["Title"] = "Đề nghị cấp giấy xác nhận";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Parent/Index">Trang chính</a> &rsaquo; 
+            <a asp-page="/Parent/Requests/Index">Đơn từ & Yêu cầu</a> &rsaquo; 
+            <span>Cấp giấy xác nhận</span>
+        </div>
+        <h1 class="page-title">Đề nghị cấp giấy xác nhận & hồ sơ học sinh</h1>
+        <p class="text-muted">Gửi yêu cầu cấp giấy xác nhận học tập hoặc bản sao hồ sơ đến bộ phận Giáo vụ (UC-40)</p>
+    </div>
+    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">
+        <icon name="arrow-left" /> Quay lại danh sách
+    </a>
+</div>
+
+<div class="grid grid-2" style="grid-template-columns: 2fr 1fr; gap: var(--space-6); align-items: start;">
+    <div class="app-card">
+        <div class="card-header bg-lavender-subtle">
+            <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="file-text" class="text-primary" /> Thông tin loại giấy tờ đề nghị cấp
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="SelectedStudentId">Chọn con / học sinh <span class="text-danger">*</span></label>
+                    <select asp-for="SelectedStudentId" class="form-control" required>
+                        @foreach (var child in Model.Children)
+                        {
+                            var cls = child.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                            <option value="@child.Id">@child.FullName (@child.StudentCode)@(string.IsNullOrEmpty(cls) ? "" : $" - Lớp {cls}")</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="DocumentType">Loại giấy tờ đề nghị cấp <span class="text-danger">*</span></label>
+                    <select asp-for="DocumentType" class="form-control" required>
+                        <option value="Giấy xác nhận đang học tại trường">Giấy xác nhận đang học tại trường (Xác nhận học sinh)</option>
+                        <option value="Giấy xác nhận chuyên cần và rèn luyện">Giấy xác nhận chuyên cần và kết quả rèn luyện</option>
+                        <option value="Bản sao học bạ / Hồ sơ chuyển trường">Bản sao học bạ / Hồ sơ chuyển trường</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="Quantity">Số lượng bản in <span class="text-danger">*</span></label>
+                    <input type="number" asp-for="Quantity" class="form-control" min="1" max="5" required />
+                    <small class="text-muted">Tối đa 5 bản in đóng dấu đỏ cho mỗi lần đề nghị.</small>
+                    <span asp-validation-for="Quantity" class="form-error"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label" asp-for="Purpose">Mục đích sử dụng <span class="text-danger">*</span></label>
+                    <input type="text" asp-for="Purpose" class="form-control" placeholder="Ví dụ: Bổ sung hồ sơ bảo hiểm y tế, làm hộ chiếu/visa, thủ tục trợ cấp..." required />
+                    <span asp-validation-for="Purpose" class="form-error"></span>
+                </div>
+
+                <div class="form-group mb-5">
+                    <label class="form-label" asp-for="Notes">Yêu cầu bổ sung (nếu có)</label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Ghi chú thêm thông tin cần có trong văn bản xác nhận..."></textarea>
+                </div>
+
+                <div class="d-flex justify-end gap-3 pt-3 border-top">
+                    <a asp-page="/Parent/Requests/Index" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary">
+                        <icon name="send" /> Gửi đề nghị cấp giấy tờ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="app-card mb-4">
+            <div class="card-header bg-light">
+                <h3 class="card-title text-sm font-semibold">Quy trình cấp văn bản (BR-39, BR-40)</h3>
+            </div>
+            <div class="card-body text-sm text-secondary">
+                <ul class="pl-4 mb-0" style="line-height: 1.7;">
+                    <li><strong>Thời gian giải quyết:</strong> Trong vòng <strong>24 giờ &ndash; 48 giờ làm việc</strong> kể từ khi gửi đề nghị hợp lệ.</li>
+                    <li><strong>Ký duyệt và đóng dấu:</strong> Văn bản được lập bởi bộ phận Giáo vụ và có chữ ký xác nhận của Ban Giám hiệu cùng dấu đỏ nhà trường.</li>
+                    <li><strong>Hình thức nhận:</strong> Phụ huynh nhận bản giấy trực tiếp tại Phòng Giáo vụ (Tầng 1) hoặc xem mã văn bản điện tử trên hệ thống.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

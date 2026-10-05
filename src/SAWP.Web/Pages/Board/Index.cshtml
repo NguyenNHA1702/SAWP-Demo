@@ -1,0 +1,132 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan Ban Giám hiệu";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Bảng điều khiển Ban Giám hiệu</h1>
+        <div class="page-subtitle">Xin chào Thầy <strong>@CurrentUser.FullName</strong> (Hiệu trưởng) · Báo cáo vận hành học đường và phê duyệt yêu cầu thẩm quyền cao</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Board/Announcements/Index" class="btn btn-candy">
+            <icon name="bell" size="sm" /> Phát hành thông báo trường
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="users" shape="circle" tone="slate" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalStudents</div>
+            <div class="stat-label">Tổng học sinh toàn trường</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="file-text" shape="circle" tone="danger" size="lg" />
+        <div>
+            <div class="stat-val">@Model.EscalatedLeaveCount</div>
+            <div class="stat-label">Đơn nghỉ dài hạn cần BGH duyệt</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="refresh-cw" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TransferApprovalCount</div>
+            <div class="stat-label">Đơn chuyển lớp chờ BGH phê duyệt</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="utensils" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalMealsToday</div>
+            <div class="stat-label">Suất ăn bán trú hôm nay</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Approvals Queue -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="shield" shape="squircle" tone="slate" size="md" /> Hàng đợi phê duyệt thẩm quyền Ban Giám hiệu (BR-41)
+            </h3>
+            <span class="badge badge-danger">@Model.BoardApprovalsQueue.Count chờ duyệt</span>
+        </div>
+
+        @if (Model.BoardApprovalsQueue.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach (var item in Model.BoardApprovalsQueue)
+                {
+                    <div class="sticker-card" style="padding: 1rem; background: #FFFFFF;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 700; font-size: 1rem;">
+                                @(item.RequestType == RequestType.Leave ? "Đơn xin nghỉ học dài ngày leo thang (UC-27)" : "Đơn xin chuyển lớp học sinh (UC-38)")
+                            </span>
+                            <span class="badge badge-amber">@item.Status</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 0.5rem;">
+                            Học sinh: <strong>@item.Student.FullName</strong> · Mã: <code>@item.RequestCode</code> · Ngày gửi: @Model.FormatDate(item.SubmittedAt)
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            @if (item.RequestType == RequestType.Leave)
+                            {
+                                <a href="/Board/Requests/Leave" class="btn btn-sm btn-mint">
+                                    <icon name="check" size="sm" /> Phê duyệt đơn nghỉ
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/Board/Requests/Transfers" class="btn btn-sm btn-mint">
+                                    <icon name="check" size="sm" /> Phê duyệt chuyển lớp
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="check-circle" tone="mint" size="xl" class="empty-icon" />
+                <div class="empty-title">Không có yêu cầu chờ phê duyệt</div>
+                <div class="empty-desc">Tất cả các hồ sơ leo thang và đề xuất chuyển lớp đã được Ban Giám hiệu giải quyết.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Operational Reports Shortcuts -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="book-open" shape="squircle" tone="violet" size="md" /> Báo cáo tổng hợp trường học
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+            <a href="/Board/Reports/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="users" tone="amber" size="sm" /> Báo cáo cơ cấu học sinh & Sĩ số các khối (UC-49)
+            </a>
+            <a href="/Board/Reports/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="calendar" tone="mint" size="sm" /> Báo cáo tỷ lệ chuyên cần & Điểm danh toàn trường (UC-50)
+            </a>
+            <a href="/Board/Reports/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="utensils" tone="pink" size="sm" /> Báo cáo sử dụng dịch vụ ăn bán trú (UC-51)
+            </a>
+            <a href="/Board/Reports/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="file-text" tone="violet" size="sm" /> Báo cáo thống kê xử lý hồ sơ hành chính (UC-52)
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,84 @@
+@page
+@model ScheduleModel
+@{
+    ViewData["Title"] = $"Thời khóa biểu Lớp {Model.AssignedClass?.Name}";
+    Layout = "_AppLayout";
+
+    var days = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
+    string DayName(DayOfWeek d) => d switch
+    {
+        DayOfWeek.Monday => "Thứ Hai",
+        DayOfWeek.Tuesday => "Thứ Ba",
+        DayOfWeek.Wednesday => "Thứ Tư",
+        DayOfWeek.Thursday => "Thứ Năm",
+        DayOfWeek.Friday => "Thứ Sáu",
+        _ => d.ToString()
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Thời khóa biểu Lớp @Model.AssignedClass?.Name (UC-19)</h1>
+        <div class="page-subtitle">Lịch giảng dạy và học tập các môn học trong tuần của lớp chủ nhiệm</div>
+    </div>
+</div>
+
+<div class="sticker-card">
+    <div class="table-container">
+        <table class="table-pop" style="text-align: center;">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Tiết học</th>
+                    @foreach (var d in days)
+                    {
+                        <th>@DayName(d)</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (int p = 1; p <= 8; p++)
+                {
+                    var periodNum = p;
+                    <tr>
+                        <td style="font-weight: 700; background-color: #F8FAFC;">
+                            Tiết @periodNum
+                            <div style="font-size: 0.75rem; color: var(--fg-muted); font-weight: 500;">
+                                @(periodNum <= 4 ? "Sáng" : "Chiều")
+                            </div>
+                        </td>
+
+                        @foreach (var d in days)
+                        {
+                            var slot = Model.ScheduleEntries.FirstOrDefault(s => s.DayOfWeek == d && s.PeriodNumber == periodNum);
+                            <td style="padding: 0.75rem 0.5rem; vertical-align: top;">
+                                @if (slot != null)
+                                {
+                                    <div style="background-color: #FAF5FF; border: 1.5px solid var(--accent-violet); border-radius: var(--radius-sm); padding: 0.5rem; box-shadow: 2px 2px 0px var(--accent-violet); text-align: left;">
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: var(--accent-violet);">
+                                            @slot.SubjectName
+                                        </div>
+                                        <div style="font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.15rem;">
+                                            @(slot.TeacherName ?? "GV bộ môn")
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(slot.Room))
+                                        {
+                                            <div style="font-size: 0.75rem; color: var(--fg-subtle);">
+                                                Phòng: @slot.Room
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="color: var(--fg-subtle); font-size: 0.85rem; padding: 0.5rem; border: 1px dashed var(--border-light); border-radius: var(--radius-sm);">
+                                        -
+                                    </div>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

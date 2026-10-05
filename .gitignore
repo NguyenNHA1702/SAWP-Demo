@@ -1,0 +1,29 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio cache / user files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Temporary & scratch directories
+scratch/
+.system_generated/
+
+## OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+## IDEs
+.idea/
+.vscode/
+*.swp
+*~

@@ -1,0 +1,130 @@
+@page
+@model SAWP.Web.Pages.Admin.Audit.IndexModel
+@{
+    ViewData["Title"] = "Nhật ký kiểm toán";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Nhật ký kiểm toán</span>
+        </div>
+        <h1 class="page-title">Nhật ký kiểm toán bảo mật & vận hành</h1>
+        <p class="text-muted">Theo dõi mọi sự kiện thay đổi dữ liệu, đăng nhập, điều chỉnh điểm danh và phê duyệt đơn (UC-58, BR-45, BR-49)</p>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-3 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 200px; flex: 1;">
+                <label class="form-label text-xs mb-1">Từ khóa tìm kiếm</label>
+                <input type="text" asp-for="Keyword" class="form-control form-control-sm" placeholder="Tìm theo tên người thực hiện, ID, chi tiết..." />
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 150px;">
+                <label class="form-label text-xs mb-1">Loại hành động</label>
+                <select asp-for="ActionFilter" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả hành động --</option>
+                    @foreach (var a in Model.AvailableActions)
+                    {
+                        <option value="@a">@a</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 150px;">
+                <label class="form-label text-xs mb-1">Thực thể / Bảng</label>
+                <select asp-for="EntityFilter" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả thực thể --</option>
+                    @foreach (var e in Model.AvailableEntities)
+                    {
+                        <option value="@e">@e</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 130px;">
+                <label class="form-label text-xs mb-1">Từ ngày</label>
+                <input type="date" asp-for="FromDate" class="form-control form-control-sm" />
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 130px;">
+                <label class="form-label text-xs mb-1">Đến ngày</label>
+                <input type="date" asp-for="ToDate" class="form-control form-control-sm" />
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    <icon name="filter" /> Lọc
+                </button>
+                <a asp-page="/Admin/Audit/Index" class="btn btn-ghost btn-sm">Đặt lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="lock" class="text-primary" /> Bản ghi kiểm toán gần nhất (@Model.Logs.Count bản ghi)
+        </h2>
+    </div>
+
+    @if (!Model.Logs.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Không tìm thấy bản ghi nhật ký kiểm toán nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="min-width: 140px;">Thời gian</th>
+                        <th>Người thực hiện</th>
+                        <th>Hành động</th>
+                        <th>Đối tượng</th>
+                        <th>Chi tiết ghi nhận (BR-45)</th>
+                        <th>Địa chỉ IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model.Logs)
+                    {
+                        <tr>
+                            <td class="font-mono text-xs text-muted">
+                                @log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                            </td>
+                            <td>
+                                <div class="font-semibold text-sm">@(string.IsNullOrEmpty(log.ActorName) ? "Hệ thống" : log.ActorName)</div>
+                                <span class="badge badge-subtle text-xs">@(string.IsNullOrEmpty(log.ActorRole) ? "System" : log.ActorRole)</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-purple font-mono font-bold text-xs">@log.Action</span>
+                            </td>
+                            <td class="text-xs">
+                                <span class="font-semibold">@log.EntityName</span>
+                                @if (!string.IsNullOrEmpty(log.EntityId))
+                                {
+                                    <span class="text-muted font-mono">#@log.EntityId</span>
+                                }
+                            </td>
+                            <td class="text-xs text-secondary" style="max-width: 320px;">
+                                @log.Details
+                            </td>
+                            <td class="font-mono text-xs text-muted">
+                                @(log.IpAddress ?? "127.0.0.1")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

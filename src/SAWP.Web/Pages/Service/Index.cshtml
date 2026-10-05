@@ -1,0 +1,112 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan Bếp ăn bán trú";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Bảng điều khiển Bộ phận Bếp & Bán trú</h1>
+        <div class="page-subtitle">Xin chào <strong>@CurrentUser.FullName</strong> · Quản lý danh sách suất ăn, kiểm soát số lượng và điều chỉnh bữa ăn học đường</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Service/Lunch/Daily" class="btn btn-candy">
+            <icon name="utensils" size="sm" /> Xem danh sách xuất ăn hôm nay
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="utensils" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalMealsToday</div>
+            <div class="stat-label">Tổng suất ăn hôm nay</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="clock" shape="circle" tone="@(Model.IsPastCutoff ? "danger" : "mint")" size="lg" />
+        <div>
+            <div class="stat-val" style="font-size: 1.5rem;">
+                @(Model.IsPastCutoff ? "Đã khóa sổ" : "Đang mở nhận")
+            </div>
+            <div class="stat-label">Hạn chốt: @(Model.TodayLunchDay?.CutoffTime.ToString(@"hh\:mm") ?? "08:00") sáng</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="calendar" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val" style="font-size: 1.4rem;">@Model.FormatDate(DateTime.Today)</div>
+            <div class="stat-label">Ngày phục vụ</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Today's Menu Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="utensils" shape="squircle" tone="pink" size="md" /> Thực đơn hôm nay (UC-32)
+            </h3>
+            <span class="badge badge-pink">Tiêu chuẩn</span>
+        </div>
+
+        @if (Model.TodayLunchDay != null)
+        {
+            <div style="font-size: 1.1rem; line-height: 1.7; background-color: #FFFDF5; border: 2px dashed var(--border-dark); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.25rem;">
+                @Model.TodayLunchDay.MenuDescription
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--fg-muted);">
+                <span>Đơn giá: <strong>@Model.TodayLunchDay.Price.ToString("N0") VNĐ / suất</strong></span>
+                <a href="/Service/Lunch/Menu" class="btn btn-sm btn-outline">Cấu hình thực đơn</a>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-title">Chưa mở ngày phục vụ</div>
+                <div class="empty-desc">Hôm nay không có cấu hình phục vụ ăn bán trú.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Class Breakdown -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="users" shape="squircle" tone="mint" size="md" /> Số lượng suất ăn theo lớp (UC-33)
+            </h3>
+            <a href="/Service/Lunch/Daily" style="font-size: 0.85rem;">Chi tiết &rarr;</a>
+        </div>
+
+        <div class="table-container">
+            <table class="table-pop">
+                <thead>
+                    <tr>
+                        <th>Lớp</th>
+                        <th>Suất đăng ký</th>
+                        <th>Sĩ số lớp</th>
+                        <th>Tỷ lệ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.ClassSummaries)
+                    {
+                        var pct = c.Capacity > 0 ? (c.RegisteredCount * 100 / c.Capacity) : 0;
+                        <tr>
+                            <td><strong>Lớp @c.ClassName</strong></td>
+                            <td><span class="badge badge-mint" style="font-size: 0.9rem;">@c.RegisteredCount</span></td>
+                            <td>@c.Capacity</td>
+                            <td>@pct%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

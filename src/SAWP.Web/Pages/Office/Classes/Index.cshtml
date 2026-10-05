@@ -1,0 +1,200 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Quản lý Lớp học & Năm học";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Quản lý Lớp học & Năm học (UC-13, UC-14)</h1>
+        <div class="page-subtitle">Thiết lập năm học, quản lý danh sách lớp, định mức sĩ số và phân công chuyên môn</div>
+    </div>
+</div>
+
+<!-- School Year Selector Bar -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <icon name="calendar" shape="squircle" tone="violet" size="md" />
+        <div>
+            <div style="font-size: 0.85rem; color: var(--fg-muted); font-weight: 600;">NĂM HỌC HIỆN TẠI:</div>
+            <div style="font-size: 1.25rem; font-weight: 800;">
+                @(Model.ActiveSchoolYear?.Name ?? "Chưa có năm học") 
+                <span class="badge @(Model.ActiveSchoolYear?.Status == SchoolYearStatus.Active ? "badge-mint" : "badge-slate")">
+                    @(Model.ActiveSchoolYear?.Status == SchoolYearStatus.Active ? "Đang hoạt động (BR-14)" : "Lưu trữ/Kế hoạch")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span style="font-size: 0.9rem; font-weight: 600;">Chọn năm học khác:</span>
+        @foreach (var y in Model.SchoolYears)
+        {
+            <a href="/Office/Classes/Index?yearId=@y.Id" class="btn btn-sm @(y.Id == Model.ActiveSchoolYear?.Id ? "btn-candy" : "btn-outline")">
+                @y.Code
+            </a>
+        }
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Classes Table -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="book-open" shape="squircle" tone="violet" size="md" /> Danh sách Lớp học trong năm (UC-14)
+            </h3>
+            <span class="badge badge-violet">@Model.Classes.Count lớp</span>
+        </div>
+
+        @if (Model.Classes.Any())
+        {
+            <div class="table-container">
+                <table class="table-pop">
+                    <thead>
+                        <tr>
+                            <th>Tên lớp</th>
+                            <th>Khối</th>
+                            <th>Phòng</th>
+                            <th>Sĩ số</th>
+                            <th>Giáo viên chủ nhiệm</th>
+                            <th style="text-align: right;">Tác vụ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Classes)
+                        {
+                            var pct = c.Capacity > 0 ? (c.StudentCount * 100 / c.Capacity) : 0;
+                            <tr>
+                                <td><strong style="font-size: 1.1rem;">Lớp @c.Name</strong></td>
+                                <td>Khối @c.Grade</td>
+                                <td>@(c.RoomNumber ?? "-")</td>
+                                <td>
+                                    <span style="font-weight: 700; color: @(pct >= 100 ? "#E11D48" : "#1E293B");">
+                                        @c.StudentCount / @c.Capacity
+                                    </span>
+                                    <span style="font-size: 0.8rem; color: var(--fg-muted);">(@pct%)</span>
+                                </td>
+                                <td>
+                                    @if (c.HomeroomTeacherName != "Chưa phân công")
+                                    {
+                                        <span class="badge badge-mint"><icon name="user" size="sm" /> @c.HomeroomTeacherName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-amber">Chưa phân công</span>
+                                    }
+                                </td>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 0.35rem;">
+                                        <a href="/Office/Classes/AssignTeacher?classId=@c.Id" class="btn btn-sm btn-outline" title="Phân công GVCN (UC-15)">
+                                            <icon name="user" size="sm" /> GVCN
+                                        </a>
+                                        <a href="/Office/Classes/AssignStudents?classId=@c.Id" class="btn btn-sm btn-outline" title="Phân lớp học sinh (UC-16)">
+                                            <icon name="users" size="sm" /> Phân lớp
+                                        </a>
+                                        <a href="/Office/Classes/Schedule?classId=@c.Id" class="btn btn-sm btn-outline" title="Thời khóa biểu (UC-18)">
+                                            <icon name="clock" size="sm" /> TKB
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="book-open" tone="slate" size="xl" class="empty-icon" />
+                <div class="empty-title">Chưa có lớp nào trong năm học này</div>
+                <div class="empty-desc">Sử dụng biểu mẫu bên phải để tạo mới lớp học.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Forms Column -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+        <!-- Create Class Form (UC-14) -->
+        <div class="sticker-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <icon name="plus" shape="squircle" tone="mint" size="md" /> Thêm Lớp học mới (UC-14)
+                </h3>
+            </div>
+
+            <form method="post" asp-page-handler="CreateClass" asp-route-yearId="@Model.ActiveSchoolYear?.Id">
+                <div class="field">
+                    <label class="field-label" for="cName">Tên lớp (*)</label>
+                    <input asp-for="ClassName" id="cName" class="input" placeholder="ví dụ: 1C, 2B..." required />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="field">
+                        <label class="field-label" for="cGrade">Khối lớp (1..5)</label>
+                        <select asp-for="Grade" id="cGrade" class="select">
+                            <option value="1">Khối 1</option>
+                            <option value="2">Khối 2</option>
+                            <option value="3">Khối 3</option>
+                            <option value="4">Khối 4</option>
+                            <option value="5">Khối 5</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="cCap">Sĩ số tối đa</label>
+                        <input asp-for="Capacity" id="cCap" type="number" class="input" value="35" min="1" max="50" required />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="cRoom">Phòng học</label>
+                    <input asp-for="RoomNumber" id="cRoom" class="input" placeholder="ví dụ: P.103" />
+                </div>
+
+                <button type="submit" class="btn btn-mint btn-lg" style="width: 100%; margin-top: 0.5rem;">
+                    <icon name="check" size="md" /> Tạo lớp học
+                </button>
+            </form>
+        </div>
+
+        <!-- Create School Year Form (UC-13) -->
+        <div class="sticker-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <icon name="calendar" shape="squircle" tone="amber" size="md" /> Tạo Năm học mới (UC-13)
+                </h3>
+            </div>
+
+            <form method="post" asp-page-handler="CreateYear">
+                <div class="field">
+                    <label class="field-label" for="yCode">Mã năm học (*)</label>
+                    <input asp-for="YearCode" id="yCode" class="input" placeholder="ví dụ: 2027-2028" required />
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="yName">Tên hiển thị (*)</label>
+                    <input asp-for="YearName" id="yName" class="input" placeholder="Năm học 2027 - 2028" required />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="field">
+                        <label class="field-label" for="sDate">Bắt đầu</label>
+                        <input asp-for="StartDate" id="sDate" type="date" class="input" required />
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="eDate">Kết thúc</label>
+                        <input asp-for="EndDate" id="eDate" type="date" class="input" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;">
+                    <icon name="plus" size="sm" /> Tạo năm học mới
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

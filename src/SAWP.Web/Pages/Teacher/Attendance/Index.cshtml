@@ -1,0 +1,146 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = $"Điểm danh Lớp {Model.AssignedClass?.Name}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Sổ Điểm danh Hàng ngày: Lớp @Model.AssignedClass?.Name (UC-21)</h1>
+        <div class="page-subtitle">Giáo viên chủ nhiệm thực hiện điểm danh mỗi ngày học cho học sinh trong lớp (BR-21, BR-23)</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Teacher/Attendance/Summary" class="btn btn-outline">
+            <icon name="file-text" size="sm" /> Báo cáo tổng hợp chuyên cần (UC-28)
+        </a>
+    </div>
+</div>
+
+<!-- Date Picker & Lock Status -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <form method="get" style="display: flex; align-items: center; gap: 0.75rem;">
+        <label style="font-weight: 700; font-size: 0.95rem;">Chọn ngày điểm danh:</label>
+        <input type="date" name="Date" class="input" style="width: auto; padding: 0.4rem 0.75rem;" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit();" />
+        <button type="submit" class="btn btn-sm btn-candy">Xem</button>
+    </form>
+
+    <div>
+        @if (Model.IsLocked)
+        {
+            <span class="badge badge-danger" title="Đã qua thời hạn tự chỉnh sửa của GVCN">
+                <icon name="lock" size="sm" /> Đã khóa sổ GVCN (MSG19)
+            </span>
+        }
+        else
+        {
+            <span class="badge badge-mint">
+                <icon name="check" size="sm" /> Trong thời hạn mở điểm danh
+            </span>
+        }
+    </div>
+</div>
+
+<!-- Attendance Form -->
+<form method="post">
+    <input type="hidden" asp-for="Date" />
+
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="calendar" shape="squircle" tone="violet" size="md" /> Danh sách học sinh ngày @Model.FormatDate(Model.Date)
+            </h3>
+            @if (!Model.IsLocked)
+            {
+                <button type="button" class="btn btn-sm btn-outline" onclick="setAllPresent();">
+                    <icon name="check-circle" size="sm" tone="mint" /> Đánh dấu tất cả có mặt
+                </button>
+            }
+        </div>
+
+        <div class="table-container">
+            <table class="table-pop">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">STT</th>
+                        <th>Mã HS</th>
+                        <th>Họ và tên</th>
+                        <th>Đơn nghỉ phép (BR-26)</th>
+                        <th>Trạng thái điểm danh (BR-23)</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.StudentRows.Count; i++)
+                    {
+                        var row = Model.StudentRows[i];
+                        <tr>
+                            <td><strong>@(row.RollNumber?.ToString("D2") ?? (i + 1).ToString("D2"))</strong></td>
+                            <td><code>@row.StudentCode</code></td>
+                            <td><strong>@row.FullName</strong></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(row.LeaveIndicator))
+                                {
+                                    <span class="badge badge-amber">
+                                        <icon name="file-text" size="sm" /> @row.LeaveIndicator
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--fg-subtle); font-size: 0.85rem;">-</span>
+                                }
+                            </td>
+                            <td>
+                                <input type="hidden" name="Items[@i].StudentId" value="@row.StudentId" />
+                                @if (Model.IsLocked)
+                                {
+                                    <span class="badge @(row.CurrentStatus == AttendanceStatus.Present ? "badge-mint" : row.CurrentStatus == AttendanceStatus.Late ? "badge-amber" : "badge-danger")">
+                                        @(row.CurrentStatus == AttendanceStatus.Present ? "Có mặt" : row.CurrentStatus == AttendanceStatus.AbsentWithLeave ? "Nghỉ có phép" : row.CurrentStatus == AttendanceStatus.AbsentWithoutLeave ? "Nghỉ không phép" : "Đi muộn")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <select name="Items[@i].Status" class="select attendance-select" style="padding: 0.4rem 0.75rem; font-weight: 600;">
+                                        <!option value="1" @(row.CurrentStatus == AttendanceStatus.Present ? "selected" : "")>✓ Có mặt (Present)</!option>
+                                        <!option value="2" @(row.CurrentStatus == AttendanceStatus.AbsentWithLeave ? "selected" : "")>P Nghỉ có phép (Excused)</!option>
+                                        <!option value="3" @(row.CurrentStatus == AttendanceStatus.AbsentWithoutLeave ? "selected" : "")>K Nghỉ không phép (Unexcused)</!option>
+                                        <!option value="4" @(row.CurrentStatus == AttendanceStatus.Late ? "selected" : "")>M Đi muộn (Late)</!option>
+                                    </select>
+                                }
+                            </td>
+                            <td>
+                                @if (Model.IsLocked)
+                                {
+                                    <span style="font-size: 0.85rem; color: var(--fg-muted);">@(row.CurrentNote ?? "-")</span>
+                                }
+                                else
+                                {
+                                    <input type="text" name="Items[@i].Note" value="@row.CurrentNote" class="input" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;" placeholder="Lý do muộn/vắng..." />
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.IsLocked)
+        {
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-candy btn-lg">
+                    <icon name="check" size="md" /> Lưu sổ điểm danh (MSG18)
+                </button>
+            </div>
+        }
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function setAllPresent() {
+            document.querySelectorAll('.attendance-select').forEach(sel => {
+                sel.value = '1';
+            });
+        }
+    </script>
+}

@@ -1,0 +1,80 @@
+@page
+@model AssignTeacherModel
+@{
+    ViewData["Title"] = $"Phân công GVCN Lớp {Model.Class.Name}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Classes/Index" style="font-size:0.85rem; color:var(--fg-muted);">Lớp học</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Phân công GVCN</span>
+        </div>
+        <h1 class="page-title">Phân công Giáo viên chủ nhiệm: Lớp @Model.Class.Name (UC-15)</h1>
+        <div class="page-subtitle">Chỉ định giáo viên phụ trách quản lý học sinh và điểm danh hàng ngày (BR-16)</div>
+    </div>
+</div>
+
+<div style="max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Current Assignment Card -->
+    @if (Model.CurrentAssignment != null)
+    {
+        <div class="sticker-card" style="background-color: #F5F3FF; border-color: var(--accent-violet);">
+            <div class="card-header">
+                <h3 class="card-title" style="color: var(--accent-violet);">
+                    <icon name="user" shape="squircle" tone="violet" size="md" /> GVCN Hiện tại
+                </h3>
+                <span class="badge badge-mint">Đang phụ trách</span>
+            </div>
+            <div style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem;">
+                @Model.CurrentAssignment.StaffProfile.FullName
+            </div>
+            <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                Mã GV: <code>@Model.CurrentAssignment.StaffProfile.StaffCode</code> · 
+                Bắt đầu từ: @Model.FormatDate(Model.CurrentAssignment.StartDate)
+            </div>
+        </div>
+    }
+
+    <!-- Assignment Form -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="edit" shape="squircle" tone="mint" size="md" /> Chọn Giáo viên chủ nhiệm
+            </h3>
+        </div>
+
+        <form method="post">
+            <div class="field">
+                <label class="field-label" for="teacher">Giáo viên phụ trách (*)</label>
+                <select asp-for="SelectedStaffId" id="teacher" class="select" required>
+                    <option value="">-- Chọn giáo viên --</option>
+                    @foreach (var t in Model.Teachers)
+                    {
+                        <option value="@t.Id">@t.FullName (@t.StaffCode - @t.Department)</option>
+                    }
+                </select>
+                <span class="field-hint">Mỗi lớp học tại một thời điểm chỉ có tối đa một GVCN chính (BR-16).</span>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="sDate">Ngày bắt đầu hiệu lực (*)</label>
+                <input asp-for="StartDate" id="sDate" type="date" class="input" required />
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="note">Ghi chú phân công / Quyết định</label>
+                <textarea asp-for="Note" id="note" class="textarea" placeholder="Căn cứ quyết định phân công chuyên môn đầu năm học..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-candy btn-lg" style="flex: 1;">
+                    <icon name="check" size="md" /> Lưu quyết định phân công
+                </button>
+                <a href="/Office/Classes/Index" class="btn btn-outline btn-lg">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

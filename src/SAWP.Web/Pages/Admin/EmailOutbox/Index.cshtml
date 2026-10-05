@@ -1,0 +1,151 @@
+@page
+@model SAWP.Web.Pages.Admin.EmailOutbox.IndexModel
+@{
+    ViewData["Title"] = "Hộp thư giả lập & mã OTP";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Admin/Index">Quản trị</a> &rsaquo; 
+            <span>Hộp thư giả lập & OTP</span>
+        </div>
+        <h1 class="page-title">Hộp thư gửi đi giả lập & Mã OTP xác thực</h1>
+        <p class="text-muted">Theo dõi toàn bộ email thông báo và mã OTP đặt lại mật khẩu gửi cho người dùng (Chế độ mô phỏng)</p>
+    </div>
+</div>
+
+<!-- Search Card -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-3 align-center">
+            <div class="form-group mb-0" style="flex: 1;">
+                <input type="text" asp-for="Search" class="form-control form-control-sm" placeholder="Tìm theo địa chỉ email, mã OTP hoặc tiêu đề thư..." />
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm">
+                <icon name="search" /> Tìm kiếm
+            </button>
+            <a asp-page="/Admin/EmailOutbox/Index" class="btn btn-ghost btn-sm">Đặt lại</a>
+        </form>
+    </div>
+</div>
+
+<!-- Emails Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="mail" class="text-primary" /> Thư gửi đi gần nhất (@Model.Emails.Count thư)
+        </h2>
+    </div>
+
+    @if (!Model.Emails.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Chưa có email nào trong hộp thư gửi đi.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="min-width: 140px;">Thời gian</th>
+                        <th>Người nhận</th>
+                        <th>Tiêu đề thư</th>
+                        <th class="text-center">Mã OTP</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-right">Xem nội dung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var em in Model.Emails)
+                    {
+                        <tr>
+                            <td class="font-mono text-xs text-muted">
+                                @em.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                            </td>
+                            <td class="font-semibold text-sm">
+                                @em.ToEmail
+                            </td>
+                            <td class="text-sm font-medium">
+                                @em.Subject
+                            </td>
+                            <td class="text-center">
+                                @if (!string.IsNullOrEmpty(em.OtpCode))
+                                {
+                                    <span class="badge badge-warning font-mono font-bold text-sm">
+                                        <icon name="key" size="xs" /> @em.OtpCode
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (em.Status == "Sent")
+                                {
+                                    <span class="badge badge-success"><icon name="check" /> Đã gửi</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger"><icon name="alert-triangle" /> Lỗi</span>
+                                }
+                            </td>
+                            <td class="text-right">
+                                <button type="button" class="btn btn-secondary btn-xs" onclick="openEmailModal('@em.ToEmail', '@Html.Raw(em.Subject.Replace("'", "\\'"))', '@Html.Raw(em.Body.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))')">
+                                    <icon name="eye" /> Xem chi tiết
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal View Email Body -->
+<div id="emailModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 600px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="mail" class="text-primary" /> Chi tiết email giả lập
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeEmailModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="text-xs text-muted">Gửi đến:</div>
+                <div class="font-bold text-sm" id="modalToEmail"></div>
+            </div>
+            <div class="mb-3">
+                <div class="text-xs text-muted">Tiêu đề:</div>
+                <div class="font-bold text-base text-primary" id="modalSubject"></div>
+            </div>
+            <div class="mb-4">
+                <div class="text-xs text-muted mb-1">Nội dung thư:</div>
+                <div class="p-3 bg-light rounded text-sm font-mono" id="modalBody" style="white-space: pre-wrap; line-height: 1.6; max-height: 250px; overflow-y: auto;"></div>
+            </div>
+            <div class="d-flex justify-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeEmailModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEmailModal(toEmail, subject, body) {
+            document.getElementById('modalToEmail').textContent = toEmail;
+            document.getElementById('modalSubject').textContent = subject;
+            document.getElementById('modalBody').textContent = body;
+            document.getElementById('emailModal').style.display = 'flex';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').style.display = 'none';
+        }
+    </script>
+}

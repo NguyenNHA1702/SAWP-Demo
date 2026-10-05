@@ -1,0 +1,154 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Điểm danh của con";
+    Layout = "_AppLayout";
+
+    var prevMonthDate = new DateTime(Model.Year, Model.Month, 1).AddMonths(-1);
+    var nextMonthDate = new DateTime(Model.Year, Model.Month, 1).AddMonths(1);
+    string DowVN(DayOfWeek d) => d switch
+    {
+        DayOfWeek.Monday => "Thứ Hai",
+        DayOfWeek.Tuesday => "Thứ Ba",
+        DayOfWeek.Wednesday => "Thứ Tư",
+        DayOfWeek.Thursday => "Thứ Năm",
+        DayOfWeek.Friday => "Thứ Sáu",
+        DayOfWeek.Saturday => "Thứ Bảy",
+        DayOfWeek.Sunday => "Chủ Nhật",
+        _ => d.ToString()
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Điểm danh & Chuyên cần của con (UC-24)</h1>
+        <div class="page-subtitle">Theo dõi tình hình đi học, số buổi có mặt, nghỉ học và đi muộn của con em</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Parent/Requests/CreateLeave" class="btn btn-success">
+            <icon name="plus" size="sm" /> Nộp đơn xin nghỉ học (UC-25)
+        </a>
+    </div>
+</div>
+
+<!-- Child & Month Switcher -->
+<div class="sticker-card" style="margin-bottom: 2rem; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-weight: 700; color: var(--fg-main);">Học sinh:</span>
+        <div class="tab-pills tab-pills-flat" style="margin-bottom: 0;">
+            @foreach (var c in Model.Children)
+            {
+                <a href="/Parent/Attendance/Index?ChildId=@c.Id&Month=@Model.Month&Year=@Model.Year" class="tab-item @(c.Id == Model.SelectedChild?.Id ? "active active-violet" : "")">
+                    <icon name="user" size="sm" /> @c.FullName
+                </a>
+            }
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <a href="/Parent/Attendance/Index?ChildId=@Model.ChildId&Month=@prevMonthDate.Month&Year=@prevMonthDate.Year" class="btn btn-sm btn-outline">
+            <icon name="chevron-left" size="sm" />
+        </a>
+        <span style="font-weight: 700; font-size: 1rem; padding: 0.35rem 0.75rem; background: #F1F5F9; border-radius: var(--radius-sm); border: 1.5px solid var(--border-dark);">Tháng @Model.Month / @Model.Year</span>
+        <a href="/Parent/Attendance/Index?ChildId=@Model.ChildId&Month=@nextMonthDate.Month&Year=@nextMonthDate.Year" class="btn btn-sm btn-outline">
+            <icon name="chevron-right" size="sm" />
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker stat-sticker-mint">
+        <icon name="check-circle" shape="circle" tone="mint" size="lg" />
+        <div>
+            <div class="stat-val text-mint">@Model.PresentCount</div>
+            <div class="stat-label">Số buổi có mặt</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-violet">
+        <icon name="file-text" shape="circle" tone="violet" size="lg" />
+        <div>
+            <div class="stat-val text-primary">@Model.AbsentWithLeaveCount</div>
+            <div class="stat-label">Nghỉ có phép</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-coral">
+        <icon name="alert-triangle" shape="circle" tone="danger" size="lg" />
+        <div>
+            <div class="stat-val text-danger">@Model.AbsentWithoutLeaveCount</div>
+            <div class="stat-label">Nghỉ không phép</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker stat-sticker-amber">
+        <icon name="clock" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val text-warning">@Model.LateCount</div>
+            <div class="stat-label">Buổi đi muộn</div>
+        </div>
+    </div>
+</div>
+
+<!-- Records Table -->
+<div class="sticker-card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <icon name="calendar" shape="squircle" tone="violet" size="md" /> Chi tiết các ngày trong tháng @Model.Month
+        </h3>
+    </div>
+
+    @if (Model.MonthlyRecords.Any())
+    {
+        <div class="table-container">
+            <table class="table-pop">
+                <thead>
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Thứ</th>
+                        <th>Trạng thái điểm danh</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.MonthlyRecords)
+                    {
+                        <tr>
+                            <td><code>@Model.FormatDate(r.Date)</code></td>
+                            <td>@DowVN(r.Date.DayOfWeek)</td>
+                            <td>
+                                @switch (r.Status)
+                                {
+                                    case AttendanceStatus.Present:
+                                        <span class="badge badge-mint"><icon name="check" size="sm" /> Có mặt</span>
+                                        break;
+                                    case AttendanceStatus.AbsentWithLeave:
+                                        <span class="badge badge-violet"><icon name="file-text" size="sm" /> Nghỉ có phép</span>
+                                        break;
+                                    case AttendanceStatus.AbsentWithoutLeave:
+                                        <span class="badge badge-danger"><icon name="x" size="sm" /> Nghỉ không phép</span>
+                                        break;
+                                    case AttendanceStatus.Late:
+                                        <span class="badge badge-amber"><icon name="clock" size="sm" /> Đi muộn</span>
+                                        break;
+                                }
+                            </td>
+                            <td style="font-size: 0.85rem; color: var(--fg-muted);">
+                                @(r.Note ?? "-")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <icon name="calendar" tone="slate" size="xl" class="empty-icon" />
+            <div class="empty-title">Chưa có bản ghi điểm danh trong tháng</div>
+            <div class="empty-desc">Dữ liệu điểm danh của giáo viên sẽ hiển thị tại đây khi lớp bắt đầu điểm danh.</div>
+        </div>
+    }
+</div>

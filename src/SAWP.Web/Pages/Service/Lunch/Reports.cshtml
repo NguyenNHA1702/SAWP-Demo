@@ -1,0 +1,176 @@
+@page
+@model SAWP.Web.Pages.Service.Lunch.ReportsModel
+@{
+    ViewData["Title"] = "Báo cáo tổng hợp suất ăn";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Service/Index">Bếp bán trú</a> &rsaquo; 
+            <span>Báo cáo suất ăn</span>
+        </div>
+        <h1 class="page-title">Báo cáo tổng hợp suất ăn bán trú &ndash; Tháng @Model.Month/@Model.Year</h1>
+        <p class="text-muted">Thống kê số lượng suất ăn theo ngày và khối lớp, đối soát chi phí (UC-35)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Service/Lunch/Daily" class="btn btn-secondary">
+            <icon name="utensils" /> Suất ăn hôm nay
+        </a>
+        <button type="button" class="btn btn-ghost" onclick="window.print()">
+            <icon name="printer" /> In báo cáo
+        </button>
+    </div>
+</div>
+
+<!-- Month / Year Selector -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-4 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 140px;">
+                <label class="form-label text-xs mb-1">Chọn tháng</label>
+                <select asp-for="Month" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">Tháng @m</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 130px;">
+                <label class="form-label text-xs mb-1">Năm</label>
+                <select asp-for="Year" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int y = 2024; y <= 2027; y++)
+                    {
+                        <option value="@y">Năm @y</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <icon name="search" /> Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Metrics Cards -->
+<div class="grid grid-4 gap-4 mb-6">
+    <div class="stat-sticker">
+        <div class="stat-icon bg-lavender-subtle">
+            <icon name="calendar" class="text-primary" />
+        </div>
+        <div>
+            <div class="stat-label">Số ngày tổ chức ăn</div>
+            <div class="stat-value">@Model.TotalServingDays <span class="text-xs font-normal">ngày</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-mint-subtle">
+            <icon name="utensils" class="text-mint" />
+        </div>
+        <div>
+            <div class="stat-label">Tổng suất ăn phục vụ</div>
+            <div class="stat-value font-mono">@Model.TotalMealsServed <span class="text-xs font-normal">suất</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-peach-subtle">
+            <icon name="dollar-sign" class="text-warning" />
+        </div>
+        <div>
+            <div class="stat-label">Tổng tiền ăn tháng</div>
+            <div class="stat-value font-mono text-xl">@Model.TotalRevenue.ToString("N0") <span class="text-xs font-normal">đ</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-light">
+            <icon name="trending-up" class="text-secondary" />
+        </div>
+        <div>
+            <div class="stat-label">Bình quân / ngày</div>
+            <div class="stat-value font-mono">@Model.AverageMealsPerDay <span class="text-xs font-normal">suất</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="table" class="text-primary" /> Bảng chi tiết suất ăn theo ngày Tháng @Model.Month/@Model.Year
+        </h2>
+    </div>
+
+    @if (!Model.DailyRows.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Không có dữ liệu suất ăn cho tháng đã chọn.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">STT</th>
+                        <th style="min-width: 130px;">Ngày phục vụ</th>
+                        <th>Thực đơn chính</th>
+                        <th class="text-center">Khối 1</th>
+                        <th class="text-center">Khối 2</th>
+                        <th class="text-center">Khối 3</th>
+                        <th class="text-center">Khối 4</th>
+                        <th class="text-center">Khối 5</th>
+                        <th class="text-center font-bold">Tổng suất</th>
+                        <th class="text-right font-bold">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int stt = 1; }
+                    @foreach (var r in Model.DailyRows)
+                    {
+                        <tr>
+                            <td class="text-muted font-mono">@(stt++)</td>
+                            <td>
+                                <div class="font-semibold text-sm">@r.Date.ToString("dd/MM/yyyy")</div>
+                                <span class="text-xs text-muted">@r.Date.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"))</span>
+                            </td>
+                            <td class="text-xs text-muted" style="max-width: 250px;">
+                                @(r.MenuDescription ?? "Thực đơn dinh dưỡng tiêu chuẩn")
+                            </td>
+                            <td class="text-center font-mono text-sm">@r.Grade1Count</td>
+                            <td class="text-center font-mono text-sm">@r.Grade2Count</td>
+                            <td class="text-center font-mono text-sm">@r.Grade3Count</td>
+                            <td class="text-center font-mono text-sm">@r.Grade4Count</td>
+                            <td class="text-center font-mono text-sm">@r.Grade5Count</td>
+                            <td class="text-center font-mono font-bold text-primary text-base">
+                                @r.TotalMeals
+                            </td>
+                            <td class="text-right font-mono font-semibold text-sm">
+                                @r.TotalAmount.ToString("N0") đ
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr style="background: var(--bg-card); font-weight: bold; border-top: 2px solid var(--border-color);">
+                        <td colspan="3" class="text-right">TỔNG CỘNG THÁNG:</td>
+                        <td class="text-center font-mono">@Model.DailyRows.Sum(d => d.Grade1Count)</td>
+                        <td class="text-center font-mono">@Model.DailyRows.Sum(d => d.Grade2Count)</td>
+                        <td class="text-center font-mono">@Model.DailyRows.Sum(d => d.Grade3Count)</td>
+                        <td class="text-center font-mono">@Model.DailyRows.Sum(d => d.Grade4Count)</td>
+                        <td class="text-center font-mono">@Model.DailyRows.Sum(d => d.Grade5Count)</td>
+                        <td class="text-center font-mono text-primary text-base">@Model.TotalMealsServed</td>
+                        <td class="text-right font-mono text-mint text-base">@Model.TotalRevenue.ToString("N0") đ</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>

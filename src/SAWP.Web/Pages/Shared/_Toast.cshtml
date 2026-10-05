@@ -1,0 +1,32 @@
+@{
+    var toastMessage = TempData["ToastMessage"]?.ToString();
+    var toastType = TempData["ToastType"]?.ToString() ?? "info";
+    var toastCode = TempData["ToastCode"]?.ToString();
+}
+
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-container" id="toastContainer">
+        <div class="toast toast-@toastType" role="alert">
+            @if (toastType == "success")
+            {
+                <icon name="check-circle" shape="circle" tone="mint" size="sm" />
+            }
+            else if (toastType == "error")
+            {
+                <icon name="alert-triangle" shape="circle" tone="danger" size="sm" />
+            }
+            else
+            {
+                <icon name="info" shape="circle" tone="slate" size="sm" />
+            }
+            <div>
+                @if (!string.IsNullOrEmpty(toastCode))
+                {
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; opacity:0.8;">@toastCode</div>
+                }
+                <div>@toastMessage</div>
+            </div>
+        </div>
+    </div>
+}

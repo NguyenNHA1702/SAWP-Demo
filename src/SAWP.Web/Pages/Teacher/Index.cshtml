@@ -1,0 +1,140 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan GVCN";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Bảng điều khiển Giáo viên chủ nhiệm</h1>
+        <div class="page-subtitle">
+            Xin chào cô <strong>@CurrentUser.FullName</strong> · 
+            @if (Model.AssignedClass != null)
+            {
+                <span>Chủ nhiệm <strong>Lớp @Model.AssignedClass.Name</strong> (Phòng @Model.AssignedClass.RoomNumber)</span>
+            }
+            else
+            {
+                <span>Chưa được phân công lớp chủ nhiệm</span>
+            }
+        </div>
+    </div>
+    <div class="page-actions">
+        <a href="/Teacher/Attendance/Index" class="btn btn-candy">
+            <icon name="calendar" size="sm" /> Điểm danh ngay hôm nay
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="users" shape="circle" tone="violet" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalStudents</div>
+            <div class="stat-label">Sĩ số lớp</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="check-circle" shape="circle" tone="mint" size="lg" />
+        <div>
+            <div class="stat-val">@Model.PresentCount</div>
+            <div class="stat-label">Có mặt hôm nay</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="alert-triangle" shape="circle" tone="danger" size="lg" />
+        <div>
+            <div class="stat-val">@Model.AbsentCount</div>
+            <div class="stat-label">Vắng mặt</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="utensils" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val">@Model.LunchCount</div>
+            <div class="stat-label">Suất ăn bán trú</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+    <!-- Pending Leave Requests -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="file-text" shape="squircle" tone="violet" size="md" /> Đơn xin nghỉ cần duyệt (UC-26)
+            </h3>
+            <span class="badge badge-amber">@Model.PendingLeaveRequests.Count chờ duyệt</span>
+        </div>
+
+        @if (Model.PendingLeaveRequests.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach (var req in Model.PendingLeaveRequests)
+                {
+                    <div class="sticker-card" style="padding: 1rem; background: #FFFFFF;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <div>
+                                <h4 style="font-size: 1.05rem; margin-bottom: 0.2rem;">@req.Student.FullName</h4>
+                                <div style="font-size: 0.85rem; color: var(--fg-muted);">
+                                    Mã HS: <code>@req.Student.StudentCode</code> · Số ngày nghỉ: <strong>@req.LeaveRequest?.TotalDays ngày</strong>
+                                </div>
+                            </div>
+                            <span class="badge badge-amber">Chờ GVCN duyệt</span>
+                        </div>
+
+                        <div style="font-size: 0.9rem; background-color: #F8FAFC; padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+                            <strong>Lý do:</strong> @req.LeaveRequest?.Reason
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="/Teacher/Leave/Index" class="btn btn-sm btn-mint">
+                                <icon name="check" size="sm" /> Duyệt đơn
+                            </a>
+                            <a href="/Teacher/Leave/Index" class="btn btn-sm btn-outline">
+                                Chi tiết
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="check-circle" tone="mint" size="xl" class="empty-icon" />
+                <div class="empty-title">Không có đơn xin nghỉ tồn đọng</div>
+                <div class="empty-desc">Tất cả đơn xin nghỉ của học sinh trong lớp đã được xử lý hoàn tất.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Shortcuts -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="settings" shape="squircle" tone="slate" size="md" /> Lối tắt tác nghiệp
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+            <a href="/Teacher/Attendance/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="calendar" tone="violet" size="sm" /> Điểm danh lớp 1A hôm nay
+            </a>
+            <a href="/Teacher/Class/Roster" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="users" tone="mint" size="sm" /> Danh sách học sinh & Thông tin liên lạc
+            </a>
+            <a href="/Teacher/Class/Schedule" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="clock" tone="amber" size="sm" /> Xem thời khóa biểu lớp
+            </a>
+            <a href="/Teacher/Lunch/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="utensils" tone="pink" size="sm" /> Danh sách đăng ký ăn trưa của lớp
+            </a>
+        </div>
+    </div>
+</div>

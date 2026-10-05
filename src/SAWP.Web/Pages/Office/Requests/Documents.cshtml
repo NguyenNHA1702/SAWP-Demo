@@ -1,0 +1,224 @@
+@page
+@model SAWP.Web.Pages.Office.Requests.DocumentsModel
+@{
+    ViewData["Title"] = "Xử lý cấp phát giấy xác nhận";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Office/Index">Giáo vụ</a> &rsaquo; 
+            <span>Cấp giấy xác nhận</span>
+        </div>
+        <h1 class="page-title">Xử lý cấp phát giấy xác nhận & hồ sơ</h1>
+        <p class="text-muted">Kiểm tra thông tin học sinh, xuất số công văn và phát hành văn bản chính thức (UC-41, UC-42, BR-39, BR-40)</p>
+    </div>
+</div>
+
+<!-- Pending Requests -->
+<div class="app-card mb-6">
+    <div class="card-header d-flex justify-between align-center bg-lavender-subtle">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="clock" class="text-primary" /> Yêu cầu đang chờ cấp phát
+            <span class="badge badge-primary">@Model.PendingRequests.Count</span>
+        </h2>
+    </div>
+
+    @if (!Model.PendingRequests.Any())
+    {
+        <div class="card-body text-center py-6 text-muted">
+            Hiện không có đề nghị cấp giấy tờ nào đang chờ xử lý.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh & Lớp</th>
+                        <th>Loại giấy tờ đề nghị</th>
+                        <th class="text-center">Số lượng</th>
+                        <th>Mục đích sử dụng</th>
+                        <th>Phụ huynh</th>
+                        <th>Ngày gửi</th>
+                        <th class="text-right" style="min-width: 220px;">Thao tác giáo vụ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.PendingRequests)
+                    {
+                        var doc = req.DocumentRequestDetail;
+                        var cls = req.Student?.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                        <tr>
+                            <td class="font-mono font-bold text-primary">@req.RequestCode</td>
+                            <td>
+                                <div class="font-semibold">@req.Student?.FullName</div>
+                                <span class="badge badge-subtle text-xs">Lớp @(cls ?? "—")</span>
+                            </td>
+                            <td class="text-sm font-semibold text-secondary">
+                                @(doc?.DocumentType ?? "Giấy xác nhận")
+                            </td>
+                            <td class="text-center font-bold font-mono">
+                                @(doc?.Quantity ?? 1) bản
+                            </td>
+                            <td class="text-sm" style="max-width: 220px;">
+                                @(doc?.Purpose ?? "—")
+                            </td>
+                            <td class="text-sm">
+                                <div>@(req.RequesterGuardian?.FullName ?? "Phụ huynh")</div>
+                                <div class="text-xs text-muted">@(req.RequesterGuardian?.PhoneNumber ?? "—")</div>
+                            </td>
+                            <td class="text-xs text-muted">
+                                @req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-2">
+                                    <form method="post" asp-page-handler="Issue" asp-route-id="@req.Id" class="d-inline" onsubmit="return confirm('Xác nhận phát hành và cấp số công văn cho văn bản này? (BR-39, MSG36)');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-candy btn-sm">
+                                            <icon name="check-check" /> Cấp văn bản
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openRejectModal(@req.Id, '@req.RequestCode', '@req.Student?.FullName')">
+                                        <icon name="x" /> Từ chối
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Completed / Issued Documents History -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="history" class="text-secondary" /> Lịch sử văn bản đã phát hành / giải quyết (@Model.CompletedRequests.Count)
+        </h2>
+    </div>
+
+    @if (!Model.CompletedRequests.Any())
+    {
+        <div class="card-body text-center py-5 text-muted text-sm">
+            Chưa có lịch sử cấp phát văn bản nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh</th>
+                        <th>Loại văn bản</th>
+                        <th>Số hiệu công văn</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú / Quyết định</th>
+                        <th>Ngày phát hành</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.CompletedRequests)
+                    {
+                        var issued = req.IssuedDocument;
+                        <tr>
+                            <td class="font-mono text-sm font-semibold">@req.RequestCode</td>
+                            <td>@req.Student?.FullName</td>
+                            <td class="text-sm">@(req.DocumentRequestDetail?.DocumentType ?? "Giấy xác nhận")</td>
+                            <td>
+                                @if (issued != null)
+                                {
+                                    <span class="badge badge-success font-mono font-bold">@issued.DocumentNumber</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (req.Status)
+                                {
+                                    case SAWP.Web.Domain.RequestStatus.Completed:
+                                        <span class="badge badge-success"><icon name="check" /> Đã phát hành</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Rejected:
+                                        <span class="badge badge-danger"><icon name="x" /> Từ chối</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Cancelled:
+                                        <span class="badge badge-secondary"><icon name="slash" /> Phụ huynh hủy</span>
+                                        break;
+                                    default:
+                                        <span class="badge">@req.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-xs text-muted" style="max-width: 250px;">
+                                @(issued?.ContentSummary ?? req.RejectionReason ?? req.Notes ?? "—")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(issued?.IssueDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? req.DecidedAt?.ToLocalTime().ToString("dd/MM/yyyy") ?? req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Reject -->
+<div id="rejectModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 480px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-danger-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold text-danger d-flex align-center gap-2">
+                <icon name="alert-triangle" /> Từ chối đề nghị cấp giấy tờ
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Reject">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="rejectRequestId" />
+
+                <p class="text-sm mb-3">
+                    Từ chối yêu cầu <strong id="rejectRequestCode"></strong> của học sinh <strong id="rejectStudentName"></strong>.
+                </p>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Lý do từ chối (bắt buộc) <span class="text-danger">*</span></label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Ví dụ: Thiếu thông tin xác minh, hoặc học sinh đã được cấp bản chính trong kỳ này..." required></textarea>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeRejectModal()">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <icon name="x" /> Xác nhận từ chối
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openRejectModal(id, code, name) {
+            document.getElementById('rejectRequestId').value = id;
+            document.getElementById('rejectRequestCode').textContent = code;
+            document.getElementById('rejectStudentName').textContent = name;
+            const modal = document.getElementById('rejectModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
+}

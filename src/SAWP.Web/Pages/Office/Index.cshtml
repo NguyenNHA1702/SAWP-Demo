@@ -1,0 +1,144 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tổng quan Giáo vụ";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Bảng điều khiển Phòng Giáo vụ</h1>
+        <div class="page-subtitle">Xin chào <strong>@CurrentUser.FullName</strong> · Quản lý hồ sơ học sinh, lớp học và các thủ tục hành chính trường học</div>
+    </div>
+    <div class="page-actions">
+        <a href="/Office/Students/Index" class="btn btn-candy">
+            <icon name="plus" size="sm" /> Thêm hồ sơ học sinh
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div class="stat-sticker">
+        <icon name="users" shape="circle" tone="amber" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalStudents</div>
+            <div class="stat-label">Học sinh toàn trường</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="book-open" shape="circle" tone="violet" size="lg" />
+        <div>
+            <div class="stat-val">@Model.TotalClasses</div>
+            <div class="stat-label">Lớp học đang mở</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="refresh-cw" shape="circle" tone="mint" size="lg" />
+        <div>
+            <div class="stat-val">@Model.PendingTransferRequests</div>
+            <div class="stat-label">Đơn chuyển lớp chờ xử lý</div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <icon name="file-text" shape="circle" tone="pink" size="lg" />
+        <div>
+            <div class="stat-val">@Model.PendingDocumentRequests</div>
+            <div class="stat-label">Đơn cấp giấy tờ chờ cấp</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Pending Requests Queue -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="file-text" shape="squircle" tone="amber" size="md" /> Hàng đợi xử lý hồ sơ hành chính (UC-37, UC-41)
+            </h3>
+            <span class="badge badge-amber">@Model.PendingRequests.Count yêu cầu</span>
+        </div>
+
+        @if (Model.PendingRequests.Any())
+        {
+            <div class="table-container">
+                <table class="table-pop">
+                    <thead>
+                        <tr>
+                            <th>Mã yêu cầu</th>
+                            <th>Loại thủ tục</th>
+                            <th>Học sinh</th>
+                            <th>Ngày gửi</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var req in Model.PendingRequests)
+                        {
+                            <tr>
+                                <td><code>@req.RequestCode</code></td>
+                                <td>
+                                    @if (req.RequestType == RequestType.ClassTransfer)
+                                    {
+                                        <span>Chuyển lớp</span>
+                                    }
+                                    else if (req.RequestType == RequestType.DocumentIssuance)
+                                    {
+                                        <span>@req.DocumentRequestDetail?.DocumentType</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Nghỉ học</span>
+                                    }
+                                </td>
+                                <td><strong>@req.Student.FullName</strong></td>
+                                <td>@Model.FormatDate(req.SubmittedAt)</td>
+                                <td>
+                                    <span class="badge badge-amber">@req.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="check-circle" tone="mint" size="xl" class="empty-icon" />
+                <div class="empty-title">Không có hồ sơ tồn đọng</div>
+                <div class="empty-desc">Tất cả yêu cầu cấp giấy tờ và chuyển lớp đã được giải quyết.</div>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Administrative Links -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="settings" shape="squircle" tone="slate" size="md" /> Tác vụ Giáo vụ trọng tâm
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+            <a href="/Office/Students/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="users" tone="amber" size="sm" /> Danh bạ & Hồ sơ toàn bộ học sinh (UC-06, UC-08)
+            </a>
+            <a href="/Office/Classes/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="book-open" tone="violet" size="sm" /> Quản lý danh sách lớp & Phân công GVCN (UC-14, UC-15)
+            </a>
+            <a href="/Office/Attendance/Index" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="calendar" tone="mint" size="sm" /> Điều chỉnh điểm danh sau khóa sổ (UC-22, BR-22)
+            </a>
+            <a href="/Office/Requests/Transfers" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="refresh-cw" tone="pink" size="sm" /> Thẩm định & Áp dụng chuyển lớp học sinh (UC-37, UC-39)
+            </a>
+            <a href="/Office/Requests/Documents" class="btn btn-outline" style="justify-content: flex-start;">
+                <icon name="file-text" tone="slate" size="sm" /> Xử lý & Phát hành giấy xác nhận / học bạ (UC-41, UC-42)
+            </a>
+        </div>
+    </div>
+</div>

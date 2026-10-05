@@ -1,0 +1,151 @@
+@page
+@model GuardiansModel
+@{
+    ViewData["Title"] = $"Phụ huynh của {Model.Student.FullName}";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Students/Index" style="font-size:0.85rem; color:var(--fg-muted);">Hồ sơ học sinh</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <a href="/Office/Students/Detail?id=@Model.Student.Id" style="font-size:0.85rem; color:var(--fg-muted);">@Model.Student.FullName</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Quản lý Phụ huynh</span>
+        </div>
+        <h1 class="page-title">Người giám hộ & Phụ huynh: @Model.Student.FullName</h1>
+        <div class="page-subtitle">Quản lý quan hệ phụ huynh, chỉ định người liên hệ chính và người đưa đón (UC-10, BR-12, BR-13)</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 2rem;">
+    <!-- Currently Linked Guardians -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="users" shape="squircle" tone="mint" size="md" /> Phụ huynh hiện tại
+            </h3>
+            <span class="badge badge-mint">@Model.LinkedGuardians.Count người</span>
+        </div>
+
+        @if (Model.LinkedGuardians.Any())
+        {
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach (var g in Model.LinkedGuardians)
+                {
+                    <div style="padding: 1.25rem; border: var(--border-solid); border-radius: var(--radius-md); background-color: #FFFFFF; box-shadow: 2px 2px 0px var(--border-dark);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <div>
+                                <h4 style="font-size: 1.1rem; margin-bottom: 0.2rem;">@g.Guardian.FullName</h4>
+                                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                    <span class="badge badge-slate">
+                                        @(g.Relationship == GuardianRelationship.Father ? "Bố" : g.Relationship == GuardianRelationship.Mother ? "Mẹ" : "Người giám hộ")
+                                    </span>
+                                    @if (g.IsPrimaryContact)
+                                    {
+                                        <span class="badge badge-mint">Liên hệ chính (BR-13)</span>
+                                    }
+                                    @if (g.CanPickup)
+                                    {
+                                        <span class="badge badge-violet">Được đưa đón</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <form method="post" asp-page-handler="Unlink" asp-route-linkId="@g.Id" onsubmit="return confirm('Bạn có chắc chắn muốn hủy liên kết phụ huynh này không?');">
+                                <button type="submit" class="btn btn-sm btn-ghost" title="Hủy liên kết">
+                                    <icon name="trash" size="sm" tone="danger" />
+                                </button>
+                            </form>
+                        </div>
+
+                        <div style="font-size: 0.9rem; color: var(--fg-muted); line-height: 1.6;">
+                            <div>Số điện thoại: <strong>@g.Guardian.PhoneNumber</strong></div>
+                            <div>Email: @(g.Guardian.Email ?? "Chưa cập nhật")</div>
+                            <div>CCCD/Định danh: @(g.Guardian.IdentityNumber ?? "Chưa cập nhật")</div>
+                            <div>Địa chỉ: @(g.Guardian.Address ?? "Chưa cập nhật")</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <icon name="users" tone="amber" size="xl" class="empty-icon" />
+                <div class="empty-title">Chưa có người giám hộ</div>
+                <div class="empty-desc">Mỗi học sinh bắt buộc phải có ít nhất một phụ huynh liên hệ chính (BR-13).</div>
+            </div>
+        }
+    </div>
+
+    <!-- Link / Add New Guardian Form -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="plus" shape="squircle" tone="violet" size="md" /> Thêm hoặc Liên kết Phụ huynh
+            </h3>
+        </div>
+
+        <form method="post" asp-page-handler="Link">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="field">
+                <label class="field-label" for="gName">Họ và tên phụ huynh (*)</label>
+                <input asp-for="FullName" id="gName" class="input" placeholder="Nguyễn Văn B" required />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="field">
+                    <label class="field-label" for="gPhone">Số điện thoại (*)</label>
+                    <input asp-for="PhoneNumber" id="gPhone" class="input" placeholder="090..." required />
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="gRel">Mối quan hệ (*)</label>
+                    <select asp-for="Relationship" id="gRel" class="select">
+                        <option value="1">Bố (Father)</option>
+                        <option value="2">Mẹ (Mother)</option>
+                        <option value="3">Ông / Bà</option>
+                        <option value="4">Người giám hộ hợp pháp</option>
+                        <option value="5">Khác</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="field">
+                    <label class="field-label" for="gEmail">Địa chỉ Email</label>
+                    <input asp-for="Email" id="gEmail" type="email" class="input" placeholder="email@@example.com" />
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="gIdNum">Số CCCD / Định danh</label>
+                    <input asp-for="IdentityNumber" id="gIdNum" class="input" placeholder="001..." />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="gAddr">Địa chỉ cư trú</label>
+                <input asp-for="Address" id="gAddr" class="input" placeholder="Số nhà, phố, quận/huyện..." />
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                    <input type="checkbox" asp-for="IsPrimaryContact" style="width: 18px; height: 18px;" />
+                    <span>Đặt làm Người liên hệ chính (Primary Contact, BR-13)</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                    <input type="checkbox" asp-for="CanPickup" style="width: 18px; height: 18px;" />
+                    <span>Được quyền đưa đón học sinh</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-candy btn-lg" style="width: 100%; margin-top: 0.5rem;">
+                <icon name="check" size="md" /> Lưu liên kết phụ huynh (MSG13)
+            </button>
+        </form>
+    </div>
+</div>

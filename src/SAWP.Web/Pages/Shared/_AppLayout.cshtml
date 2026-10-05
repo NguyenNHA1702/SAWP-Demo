@@ -1,0 +1,63 @@
+@inject INotificationService NotificationService
+@inject IClock Clock
+@{
+    var unreadCount = CurrentUser.UserId.HasValue 
+        ? await NotificationService.GetUnreadCountAsync(CurrentUser.UserId.Value) 
+        : 0;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SAWP Tiểu Học</title>
+    <link rel="stylesheet" href="~/css/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+</head>
+<body class="bg-dots">
+    <div class="app-shell">
+        <partial name="_Sidebar" />
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <span class="badge badge-slate">
+                        <icon name="calendar" size="sm" /> Năm học 2026 - 2027
+                    </span>
+                    <span style="font-size:0.85rem; color:var(--fg-muted); font-weight:600;">
+                        @Clock.FormatDate(Clock.Today) (@Clock.LocalNow.ToString("HH:mm"))
+                    </span>
+                </div>
+
+                <div class="topbar-right">
+                    <a href="/Notifications" class="btn btn-sm btn-outline" style="position:relative;">
+                        <icon name="bell" size="sm" tone="violet" />
+                        <span>Thông báo</span>
+                        @if (unreadCount > 0)
+                        {
+                            <span class="badge badge-pink" style="padding:0.15rem 0.45rem; font-size:0.7rem; margin-left:0.25rem;">
+                                @unreadCount
+                            </span>
+                        }
+                    </a>
+
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-weight:700; font-size:0.9rem;">@CurrentUser.FullName</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="app-content">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <partial name="_Toast" />
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

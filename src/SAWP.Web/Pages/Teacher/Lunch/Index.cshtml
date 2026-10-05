@@ -1,0 +1,123 @@
+@page
+@model SAWP.Web.Pages.Teacher.Lunch.IndexModel
+@{
+    ViewData["Title"] = "Danh sách ăn trưa lớp";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Teacher/Index">Trang chủ GVCN</a> &rsaquo; 
+            <span>Danh sách ăn trưa</span>
+        </div>
+        <h1 class="page-title">Danh sách ăn trưa &ndash; Lớp @Model.HomeroomClass?.Name</h1>
+        <p class="text-muted">Kiểm tra học sinh ăn bán trú trong ngày của lớp phụ trách (UC-33)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Teacher/Attendance/Index" class="btn btn-secondary">
+            <icon name="calendar-check" /> Sổ điểm danh
+        </a>
+    </div>
+</div>
+
+<!-- Date selector -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-4 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 170px;">
+                <label class="form-label text-xs mb-1">Chọn ngày</label>
+                <input type="date" asp-for="Date" class="form-control form-control-sm" onchange="this.form.submit()" />
+            </div>
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <icon name="search" /> Xem danh sách
+                </button>
+                <a asp-page="/Teacher/Lunch/Index" asp-route-date="@Model.Clock.Today.ToString("yyyy-MM-dd")" class="btn btn-ghost btn-sm">Hôm nay</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Key stats -->
+<div class="grid grid-3 gap-4 mb-6">
+    <div class="stat-sticker">
+        <div class="stat-icon bg-lavender-subtle">
+            <icon name="utensils" class="text-primary" />
+        </div>
+        <div>
+            <div class="stat-label">Học sinh ăn bán trú</div>
+            <div class="stat-value font-mono">@Model.TotalMeals / @Model.Students.Count <span class="text-xs font-normal">HS</span></div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-mint-subtle">
+            <icon name="percent" class="text-mint" />
+        </div>
+        <div>
+            <div class="stat-label">Tỷ lệ đăng ký ăn</div>
+            <div class="stat-value">
+                @(Model.Students.Count > 0 ? Math.Round((double)Model.TotalMeals / Model.Students.Count * 100, 1) : 0)%
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-sticker">
+        <div class="stat-icon bg-peach-subtle">
+            <icon name="file-text" class="text-warning" />
+        </div>
+        <div>
+            <div class="stat-label">Thực đơn hôm nay</div>
+            <div class="text-xs font-medium text-secondary text-truncate" style="max-width: 250px;">
+                @(Model.ServiceDay?.MenuDescription ?? "Thực đơn dinh dưỡng tiêu chuẩn")
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="users" class="text-primary" /> Danh sách học sinh lớp @Model.HomeroomClass?.Name (@Model.Students.Count HS)
+        </h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-pop">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Mã học sinh</th>
+                    <th>Họ và tên</th>
+                    <th class="text-center">Trạng thái bán trú</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int stt = 1; }
+                @foreach (var s in Model.Students)
+                {
+                    <tr>
+                        <td class="text-muted font-mono">@(stt++)</td>
+                        <td class="font-mono font-bold text-primary">@s.StudentCode</td>
+                        <td class="font-semibold">@s.FullName</td>
+                        <td class="text-center">
+                            @if (s.HasRegistered)
+                            {
+                                <span class="badge badge-success"><icon name="check" /> Có ăn trưa</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-subtle">Không đăng ký</span>
+                            }
+                        </td>
+                        <td class="text-xs text-muted">
+                            @(s.Note ?? "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

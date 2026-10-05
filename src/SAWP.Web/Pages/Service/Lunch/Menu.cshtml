@@ -1,0 +1,226 @@
+@page
+@model SAWP.Web.Pages.Service.Lunch.MenuModel
+@{
+    ViewData["Title"] = "Quản lý thực đơn bán trú";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Service/Index">Bếp bán trú</a> &rsaquo; 
+            <span>Lịch ăn & Thực đơn</span>
+        </div>
+        <h1 class="page-title">Lịch ăn & Thực đơn bán trú &ndash; Tháng @Model.Month/@Model.Year</h1>
+        <p class="text-muted">Cấu hình các ngày tổ chức ăn bán trú, thực đơn món ăn và giờ chốt (UC-32)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="post" asp-page-handler="AutoGenerateMonth" class="d-inline" onsubmit="return confirm('Tự động tạo lịch ăn cho các ngày thứ 2 đến thứ 6 trong tháng @Model.Month/@Model.Year?');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="month" value="@Model.Month" />
+            <input type="hidden" name="year" value="@Model.Year" />
+            <button type="submit" class="btn btn-candy">
+                <icon name="sparkles" /> Tự động sinh lịch cả tháng
+            </button>
+        </form>
+        <button type="button" class="btn btn-primary" onclick="openEditModal(0, '', true, '08:00', 35000, '', '')">
+            <icon name="plus" /> Thêm ngày mới
+        </button>
+    </div>
+</div>
+
+<!-- Month / Year Selector -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-4 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 140px;">
+                <label class="form-label text-xs mb-1">Tháng</label>
+                <select asp-for="Month" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">Tháng @m</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 130px;">
+                <label class="form-label text-xs mb-1">Năm</label>
+                <select asp-for="Year" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @for (int y = 2024; y <= 2027; y++)
+                    {
+                        <option value="@y">Năm @y</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    <icon name="search" /> Xem lịch
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Service Days Table -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="calendar" class="text-primary" /> Danh sách ngày phục vụ (@Model.ServiceDays.Count ngày)
+        </h2>
+    </div>
+
+    @if (!Model.ServiceDays.Any())
+    {
+        <div class="card-body text-center py-8">
+            <div class="empty-state-icon mb-3">
+                <icon name="calendar-x" style="width: 48px; height: 48px;" class="text-muted" />
+            </div>
+            <h3 class="text-base font-semibold mb-1">Chưa có lịch ăn bán trú cho tháng @Model.Month/@Model.Year</h3>
+            <p class="text-muted text-sm mb-4">Bạn có thể bấm nút "Tự động sinh lịch cả tháng" để hệ thống tạo danh sách ngày thứ 2 &rarr; thứ 6.</p>
+            <form method="post" asp-page-handler="AutoGenerateMonth" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="month" value="@Model.Month" />
+                <input type="hidden" name="year" value="@Model.Year" />
+                <button type="submit" class="btn btn-primary">
+                    <icon name="sparkles" /> Tự động sinh lịch cả tháng ngay
+                </button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th style="min-width: 140px;">Ngày phục vụ</th>
+                        <th>Trạng thái</th>
+                        <th>Thực đơn dinh dưỡng</th>
+                        <th class="text-center">Đơn giá</th>
+                        <th class="text-center">Giờ chốt</th>
+                        <th>Ghi chú</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var day in Model.ServiceDays)
+                    {
+                        var dayName = day.Date.ToString("dddd", new System.Globalization.CultureInfo("vi-VN"));
+                        <tr>
+                            <td>
+                                <div class="font-semibold text-base">@day.Date.ToString("dd/MM/yyyy")</div>
+                                <span class="text-xs text-muted text-capitalize">@dayName</span>
+                            </td>
+                            <td>
+                                @if (day.IsAvailable)
+                                {
+                                    <span class="badge badge-success"><icon name="check" /> Có phục vụ</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary"><icon name="slash" /> Nghỉ bán trú</span>
+                                }
+                            </td>
+                            <td class="text-sm" style="max-width: 320px;">
+                                @(day.MenuDescription ?? "Chưa nhập thực đơn")
+                            </td>
+                            <td class="text-center font-mono font-bold text-sm">
+                                @day.Price.ToString("N0") đ
+                            </td>
+                            <td class="text-center font-mono text-sm">
+                                @day.CutoffTime.ToString(@"hh\:mm")
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(day.Notes ?? "—")
+                            </td>
+                            <td class="text-right">
+                                <button type="button" class="btn btn-secondary btn-xs" onclick="openEditModal(@day.Id, '@day.Date.ToString("yyyy-MM-dd")', @day.IsAvailable.ToString().ToLower(), '@day.CutoffTime.ToString(@"hh\:mm")', @day.Price, '@Html.Raw(day.MenuDescription?.Replace("'", "\\'"))', '@Html.Raw(day.Notes?.Replace("'", "\\'"))')">
+                                    <icon name="edit-2" /> Sửa
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Add / Edit Service Day -->
+<div id="dayModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 520px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-lavender-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold d-flex align-center gap-2">
+                <icon name="calendar" class="text-primary" /> <span id="modalTitle">Thiết lập ngày ăn bán trú</span>
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="SaveDay">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="modalDayId" />
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Ngày phục vụ <span class="text-danger">*</span></label>
+                        <input type="date" name="date" id="modalDate" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Giờ chốt tự hủy (hh:mm)</label>
+                        <input type="time" name="cutoffTime" id="modalCutoffTime" class="form-control form-control-sm" value="08:00" required />
+                    </div>
+                </div>
+
+                <div class="grid grid-2 gap-3 mb-3">
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">Đơn giá (VNĐ)</label>
+                        <input type="number" name="price" id="modalPrice" class="form-control form-control-sm" value="35000" step="1000" required />
+                    </div>
+                    <div class="form-group mb-0 d-flex align-end pb-2">
+                        <label class="d-flex align-center gap-2 text-sm cursor-pointer mb-0">
+                            <input type="checkbox" name="isAvailable" id="modalIsAvailable" value="true" checked />
+                            <span>Có phục vụ bán trú</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label text-xs">Mô tả thực đơn món ăn</label>
+                    <textarea name="menuDescription" id="modalMenuDescription" class="form-control form-control-sm" rows="3" placeholder="Ví dụ: Cơm trắng, Thịt bò xào cần tây, Canh ngao chua..."></textarea>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label text-xs">Ghi chú thêm</label>
+                    <input type="text" name="notes" id="modalNotes" class="form-control form-control-sm" placeholder="Ghi chú dinh dưỡng hoặc lưu ý..." />
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <icon name="check" /> Lưu thiết lập
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, date, isAvailable, cutoffTime, price, menuDescription, notes) {
+            document.getElementById('modalDayId').value = id || 0;
+            document.getElementById('modalDate').value = date || new Date().toISOString().substring(0, 10);
+            document.getElementById('modalIsAvailable').checked = isAvailable !== false;
+            document.getElementById('modalCutoffTime').value = cutoffTime || '08:00';
+            document.getElementById('modalPrice').value = price || 35000;
+            document.getElementById('modalMenuDescription').value = menuDescription || '';
+            document.getElementById('modalNotes').value = notes || '';
+            document.getElementById('modalTitle').textContent = id > 0 ? 'Cập nhật thực đơn ngày ' + date : 'Thêm ngày phục vụ mới';
+            document.getElementById('dayModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('dayModal').style.display = 'none';
+        }
+    </script>
+}

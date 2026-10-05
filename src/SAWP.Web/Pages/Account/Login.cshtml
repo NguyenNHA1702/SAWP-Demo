@@ -1,0 +1,114 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = "_PublicLayout";
+}
+
+<div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 2.5rem;">
+    <!-- Login Form Card -->
+    <div class="sticker-card" style="max-width: 480px; width: 100%; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <icon name="graduation-cap" shape="squircle" tone="violet" size="xl" style="margin-bottom: 1rem;" />
+            <h2 style="font-size: 1.85rem; margin-bottom: 0.5rem;">Đăng nhập hệ thống</h2>
+            <p style="color: var(--fg-muted); font-size: 0.95rem;">
+                Nhập tài khoản được cấp hoặc chọn tài khoản mẫu bên dưới
+            </p>
+        </div>
+
+        <form method="post" id="loginForm">
+            <div class="field">
+                <label class="field-label" for="loginUsername">Tên đăng nhập hoặc Email</label>
+                <input asp-for="Username" id="loginUsername" class="input" placeholder="admin, gv.lan, ph.nam..." required />
+            </div>
+
+            <div class="field">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="field-label" for="loginPassword">Mật khẩu</label>
+                    <a href="/Account/ForgotPassword" style="font-size: 0.85rem;">Quên mật khẩu?</a>
+                </div>
+                <input asp-for="Password" id="loginPassword" type="password" class="input" placeholder="Mật khẩu..." required />
+            </div>
+
+            <button type="submit" class="btn btn-candy btn-lg" style="width: 100%; margin-top: 1rem;">
+                <icon name="log-out" size="md" /> Đăng nhập
+            </button>
+        </form>
+    </div>
+
+    <!-- Demo Accounts Quick Selection -->
+    <div class="sticker-card" style="background-color: #FAF5FF; border-color: var(--accent-violet);">
+        <div class="card-header" style="margin-bottom: 1rem;">
+            <div>
+                <h3 style="font-size: 1.2rem; color: var(--accent-violet); display: flex; align-items: center; gap: 0.5rem;">
+                    <icon name="shield" tone="violet" size="md" /> Tài khoản mẫu (Demo Accounts)
+                </h3>
+                <div style="font-size: 0.85rem; color: var(--fg-muted); margin-top: 0.2rem;">
+                    💡 <strong>1 click</strong> để điền nhanh · <strong>Nháy đúp (double-click)</strong> để đăng nhập ngay · Mật khẩu chung: <code>Demo@123</code>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+            <!-- Admin -->
+            <div class="sticker-card demo-account-card interactive" data-username="admin" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-danger">Quản trị viên</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">admin</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Nguyễn Quản Trị</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Quản trị hệ thống & Cấu hình</div>
+            </div>
+
+            <!-- Board -->
+            <div class="sticker-card demo-account-card interactive" data-username="bgh.hung" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-slate">Ban Giám hiệu</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">bgh.hung</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Nguyễn Văn Hùng</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Hiệu trưởng trường Tiểu học</div>
+            </div>
+
+            <!-- Office -->
+            <div class="sticker-card demo-account-card interactive" data-username="giaovu.mai" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-amber">Giáo vụ</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">giaovu.mai</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Trần Thị Mai</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Phòng Giáo vụ & Học sinh</div>
+            </div>
+
+            <!-- Teacher -->
+            <div class="sticker-card demo-account-card interactive" data-username="gv.lan" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-violet">GVCN</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">gv.lan</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Lê Thị Lan</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Giáo viên chủ nhiệm lớp 1A</div>
+            </div>
+
+            <!-- Service -->
+            <div class="sticker-card demo-account-card interactive" data-username="bep.tuan" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-pink">Bếp ăn</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">bep.tuan</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Phạm Văn Tuấn</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Bếp trưởng Dịch vụ Bán trú</div>
+            </div>
+
+            <!-- Parent -->
+            <div class="sticker-card demo-account-card interactive" data-username="ph.nam" data-password="Demo@123" style="padding: 1rem; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span class="badge badge-mint">Phụ huynh</span>
+                    <code style="font-size: 0.85rem; font-weight: 700;">ph.nam</code>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Hoàng Văn Nam</div>
+                <div style="font-size: 0.8rem; color: var(--fg-muted);">Phụ huynh học sinh Đức (1A), Mai Anh (3A)</div>
+            </div>
+        </div>
+    </div>
+</div>

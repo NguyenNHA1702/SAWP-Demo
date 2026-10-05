@@ -1,0 +1,37 @@
+@page
+@model VerifyOtpModel
+@{
+    ViewData["Title"] = "Xác thực mã OTP";
+    Layout = "_PublicLayout";
+}
+
+<div style="max-width: 480px; margin: 2rem auto;">
+    <div class="sticker-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <icon name="lock" shape="squircle" tone="mint" size="xl" style="margin-bottom: 1rem;" />
+            <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Nhập mã xác thực OTP</h2>
+            <p style="color: var(--fg-muted); font-size: 0.95rem;">
+                Mã xác thực gồm 6 chữ số đã được gửi tới <strong>@Model.Email</strong> (hoặc kiểm tra tại Hộp thư giả lập trong hệ thống).
+            </p>
+        </div>
+
+        <form method="post">
+            <input type="hidden" asp-for="Email" />
+
+            <div class="field">
+                <label class="field-label" for="otp">Mã OTP (6 chữ số)</label>
+                <input asp-for="OtpCode" id="otp" class="input" style="letter-spacing: 0.3em; font-size: 1.3rem; text-align: center; font-weight: 700;" maxlength="6" placeholder="000000" required />
+            </div>
+
+            <button type="submit" class="btn btn-mint btn-lg" style="width: 100%; margin-top: 1rem;">
+                <icon name="check" size="md" /> Xác nhận mã OTP
+            </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <a href="/Account/ForgotPassword" style="font-size: 0.9rem;">
+                <icon name="chevron-left" size="sm" /> Gửi lại mã OTP
+            </a>
+        </div>
+    </div>
+</div>

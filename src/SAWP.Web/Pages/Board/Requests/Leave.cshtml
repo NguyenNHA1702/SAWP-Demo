@@ -1,0 +1,273 @@
+@page
+@model SAWP.Web.Pages.Board.Requests.LeaveModel
+@{
+    ViewData["Title"] = "BGH Phê duyệt đơn xin nghỉ học";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Board/Index">Ban Giám hiệu</a> &rsaquo; 
+            <span>Phê duyệt đơn nghỉ học dài ngày</span>
+        </div>
+        <h1 class="page-title">Phê duyệt đơn xin nghỉ học dài ngày</h1>
+        <p class="text-muted">Xem xét và giải quyết các đơn xin nghỉ phép từ 4 ngày trở lên hoặc chuyển tiếp (UC-27, BR-25, BR-41)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Board/Index" class="btn btn-secondary">
+            <icon name="arrow-left" /> Tổng quan BGH
+        </a>
+    </div>
+</div>
+
+<!-- Rule notice -->
+<div class="alert-box alert-warning mb-6">
+    <icon name="shield-alert" class="text-warning" />
+    <div class="text-sm">
+        <strong>Thẩm quyền phê duyệt của Ban Giám hiệu (BR-25, BR-41):</strong>
+        Theo quy định của nhà trường, các đơn xin nghỉ học có thời gian từ <strong>4 ngày trở lên</strong> hoặc các trường hợp đặc biệt vượt hạn mức của Giáo viên chủ nhiệm cần có sự phê duyệt trực tiếp của Ban Giám hiệu. Khi chấp thuận, hệ thống tự động ghi nhận vào học bạ chuyên cần và đồng bộ dịch vụ bán trú (BR-29).
+    </div>
+</div>
+
+<!-- Pending Requests -->
+<div class="app-card mb-6">
+    <div class="card-header d-flex justify-between align-center bg-peach-subtle">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="clock" class="text-warning" /> Đơn chờ BGH phê duyệt 
+            <span class="badge badge-warning">@Model.PendingRequests.Count</span>
+        </h2>
+    </div>
+
+    @if (!Model.PendingRequests.Any())
+    {
+        <div class="card-body text-center py-6">
+            <div class="empty-state-icon mb-2">
+                <icon name="check-circle" style="width: 44px; height: 44px;" class="text-mint" />
+            </div>
+            <h3 class="text-base font-semibold mb-1">Hiện không có đơn nào chờ BGH duyệt!</h3>
+            <p class="text-muted text-sm mb-0">Tất cả các đơn xin nghỉ dài ngày của học sinh toàn trường đã được giải quyết.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh & Lớp</th>
+                        <th>Khoảng thời gian</th>
+                        <th>Tổng số ngày</th>
+                        <th>Lý do xin nghỉ</th>
+                        <th>Phụ huynh</th>
+                        <th class="text-right" style="min-width: 220px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.PendingRequests)
+                    {
+                        var leave = req.LeaveRequest;
+                        <tr>
+                            <td>
+                                <span class="font-mono font-bold text-primary">@req.RequestCode</span>
+                                <div class="text-xs text-muted">@req.SubmittedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                            </td>
+                            <td>
+                                <div class="font-semibold text-base">@req.Student?.FullName</div>
+                                @{
+                                    var cls = req.Student?.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                                }
+                                @if (!string.IsNullOrEmpty(cls))
+                                {
+                                    <span class="badge badge-primary text-xs">Lớp @cls</span>
+                                }
+                            </td>
+                            <td>
+                                @if (leave != null)
+                                {
+                                    <div class="font-semibold">
+                                        @leave.StartDate.ToString("dd/MM/yyyy") &rarr; @leave.EndDate.ToString("dd/MM/yyyy")
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-danger font-bold text-sm">
+                                    <icon name="calendar" /> @(leave?.TotalDays ?? 0) ngày
+                                </span>
+                            </td>
+                            <td class="text-sm" style="max-width: 280px;">
+                                <div class="p-2 bg-light rounded text-secondary" style="border-left: 3px solid var(--accent-violet);">
+                                    @(leave?.Reason ?? "Không có lý do")
+                                </div>
+                            </td>
+                            <td class="text-sm">
+                                <div class="font-medium">@(req.RequesterGuardian?.FullName ?? "Phụ huynh")</div>
+                                <div class="text-xs text-muted">SĐT: @(req.RequesterGuardian?.PhoneNumber ?? "—")</div>
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-2">
+                                    <form method="post" asp-page-handler="Approve" asp-route-id="@req.Id" class="d-inline" onsubmit="return confirm('Ban Giám hiệu xác nhận phê duyệt đơn nghỉ học @leave?.TotalDays ngày cho học sinh @req.Student?.FullName?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-candy btn-sm">
+                                            <icon name="check" /> Phê duyệt
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openRejectModal(@req.Id, '@req.RequestCode', '@req.Student?.FullName')">
+                                        <icon name="x" /> Từ chối
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Processed Requests History -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="history" class="text-secondary" /> Lịch sử BGH đã xử lý gần đây (@Model.ProcessedRequests.Count)
+        </h2>
+    </div>
+
+    @if (!Model.ProcessedRequests.Any())
+    {
+        <div class="card-body text-center py-5 text-muted text-sm">
+            Chưa có lịch sử phê duyệt đơn nghỉ học dài ngày nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh & Lớp</th>
+                        <th>Thời gian</th>
+                        <th>Số ngày</th>
+                        <th>Trạng thái</th>
+                        <th>Ý kiến BGH</th>
+                        <th>Ngày quyết định</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.ProcessedRequests)
+                    {
+                        var leave = req.LeaveRequest;
+                        <tr>
+                            <td class="font-mono text-sm font-semibold">@req.RequestCode</td>
+                            <td>
+                                <div class="font-medium">@req.Student?.FullName</div>
+                                @{
+                                    var clsH = req.Student?.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                                }
+                                @if (!string.IsNullOrEmpty(clsH))
+                                {
+                                    <span class="text-xs text-muted">Lớp @clsH</span>
+                                }
+                            </td>
+                            <td class="text-sm">
+                                @if (leave != null)
+                                {
+                                    <span>@leave.StartDate.ToString("dd/MM/yyyy") - @leave.EndDate.ToString("dd/MM/yyyy")</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge badge-subtle">@(leave?.TotalDays ?? 0) ngày</span>
+                            </td>
+                            <td>
+                                @switch (req.Status)
+                                {
+                                    case SAWP.Web.Domain.RequestStatus.Approved:
+                                        <span class="badge badge-success"><icon name="check-circle" /> Đã duyệt</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Rejected:
+                                        <span class="badge badge-danger"><icon name="x-circle" /> Đã từ chối</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Cancelled:
+                                        <span class="badge badge-secondary"><icon name="slash" /> Phụ huynh hủy</span>
+                                        break;
+                                    default:
+                                        <span class="badge">@req.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-xs" style="max-width: 240px;">
+                                @if (!string.IsNullOrEmpty(req.RejectionReason))
+                                {
+                                    <span class="text-danger">Lý do từ chối: @req.RejectionReason</span>
+                                }
+                                else if (!string.IsNullOrEmpty(req.Notes))
+                                {
+                                    <span class="text-muted">@req.Notes</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-xs text-muted">
+                                @(req.DecidedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal Reject -->
+<div id="rejectModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="app-card" style="max-width: 480px; width: 90%; margin: auto; animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1);">
+        <div class="card-header bg-danger-subtle d-flex justify-between align-center">
+            <h3 class="card-title text-base font-semibold text-danger d-flex align-center gap-2">
+                <icon name="alert-triangle" /> BGH Từ chối đơn xin nghỉ học
+            </h3>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Reject">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="rejectRequestId" />
+
+                <p class="text-sm mb-3">
+                    Bạn đang từ chối đơn <strong id="rejectRequestCode"></strong> của học sinh <strong id="rejectStudentName"></strong>.
+                </p>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Ý kiến / Lý do từ chối của BGH <span class="text-danger">*</span></label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do hoặc chỉ đạo của Ban Giám hiệu..." required></textarea>
+                </div>
+
+                <div class="d-flex justify-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeRejectModal()">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <icon name="x" /> Xác nhận từ chối
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openRejectModal(id, code, name) {
+            document.getElementById('rejectRequestId').value = id;
+            document.getElementById('rejectRequestCode').textContent = code;
+            document.getElementById('rejectStudentName').textContent = name;
+            const modal = document.getElementById('rejectModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
+}

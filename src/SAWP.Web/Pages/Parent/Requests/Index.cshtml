@@ -1,0 +1,241 @@
+@page
+@model SAWP.Web.Pages.Parent.Requests.IndexModel
+@{
+    ViewData["Title"] = "Đơn từ & Đề nghị";
+}
+
+<div class="page-header d-flex justify-between align-center mb-6">
+    <div>
+        <div class="breadcrumb mb-1">
+            <a asp-page="/Parent/Index">Trang chính</a> &rsaquo; 
+            <span>Đơn từ & Đề nghị</span>
+        </div>
+        <h1 class="page-title">Đơn từ & Đề nghị của tôi</h1>
+        <p class="text-muted">Theo dõi tiến độ xử lý và gửi đề nghị hành chính cho con (UC-43, UC-44)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Parent/Requests/CreateLeave" class="btn btn-primary">
+            <icon name="plus-circle" /> Tạo đơn xin nghỉ học
+        </a>
+    </div>
+</div>
+
+<!-- Filter card -->
+<div class="app-card mb-6">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex gap-3 align-center flex-wrap">
+            <div class="form-group mb-0" style="min-width: 200px;">
+                <label class="form-label text-xs mb-1">Học sinh / Con</label>
+                <select asp-for="StudentId" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả các con --</option>
+                    @foreach (var child in Model.Children)
+                    {
+                        var clsName = child.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                        <option value="@child.Id">@child.FullName@(string.IsNullOrEmpty(clsName) ? "" : $" (Lớp {clsName})")</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 170px;">
+                <label class="form-label text-xs mb-1">Loại đề nghị</label>
+                <select asp-for="Type" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả loại --</option>
+                    <option value="Leave">Đơn xin nghỉ học</option>
+                    <option value="ClassTransfer">Xin chuyển lớp</option>
+                    <option value="DocumentIssuance">Giấy xác nhận</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-0" style="min-width: 170px;">
+                <label class="form-label text-xs mb-1">Trạng thái</label>
+                <select asp-for="Status" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Submitted">Chờ tiếp nhận</option>
+                    <option value="InReview">Đang xét duyệt</option>
+                    <option value="Escalated">Chuyển lên BGH</option>
+                    <option value="Approved">Đã phê duyệt</option>
+                    <option value="Rejected">Từ chối</option>
+                    <option value="Cancelled">Đã hủy</option>
+                </select>
+            </div>
+
+            <div class="d-flex align-end gap-2" style="margin-top: 1.3rem;">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    <icon name="filter" /> Lọc
+                </button>
+                <a asp-page="/Parent/Requests/Index" class="btn btn-ghost btn-sm">Đặt lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Requests list -->
+<div class="app-card">
+    <div class="card-header d-flex justify-between align-center">
+        <h2 class="card-title text-base font-semibold d-flex align-center gap-2">
+            <icon name="inbox" class="text-primary" /> Danh sách yêu cầu (@Model.Requests.Count)
+        </h2>
+    </div>
+    
+    @if (!Model.Requests.Any())
+    {
+        <div class="card-body text-center py-8">
+            <div class="empty-state-icon mb-3">
+                <icon name="file-text" style="width: 48px; height: 48px;" class="text-muted" />
+            </div>
+            <h3 class="text-base font-semibold mb-1">Chưa có đề nghị nào</h3>
+            <p class="text-muted text-sm mb-4">Bạn chưa gửi đơn từ hoặc không có đơn nào phù hợp với bộ lọc hiện tại.</p>
+            <a asp-page="/Parent/Requests/CreateLeave" class="btn btn-primary btn-sm">
+                <icon name="plus" /> Gửi đơn xin nghỉ học ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-pop">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Học sinh</th>
+                        <th>Loại yêu cầu</th>
+                        <th>Nội dung chi tiết</th>
+                        <th>Ngày gửi</th>
+                        <th>Đơn vị thụ lý</th>
+                        <th>Trạng thái</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.Requests)
+                    {
+                        var isCancellable = req.Status is SAWP.Web.Domain.RequestStatus.Submitted or SAWP.Web.Domain.RequestStatus.InReview or SAWP.Web.Domain.RequestStatus.Escalated;
+                        
+                        <tr>
+                            <td>
+                                <span class="font-mono font-bold text-primary">@req.RequestCode</span>
+                            </td>
+                            <td>
+                                <div class="font-semibold">@req.Student?.FullName</div>
+                                @{
+                                    var currentCls = req.Student?.ClassAssignments.FirstOrDefault(ca => ca.IsActive)?.Class?.Name;
+                                }
+                                @if (!string.IsNullOrEmpty(currentCls))
+                                {
+                                    <span class="badge badge-subtle text-xs">Lớp @currentCls</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (req.RequestType)
+                                {
+                                    case SAWP.Web.Domain.RequestType.Leave:
+                                        <span class="badge badge-primary"><icon name="calendar" /> Xin nghỉ học</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestType.ClassTransfer:
+                                        <span class="badge badge-purple"><icon name="shuffle" /> Chuyển lớp</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestType.DocumentIssuance:
+                                        <span class="badge badge-warning"><icon name="file-text" /> Giấy xác nhận</span>
+                                        break;
+                                    default:
+                                        <span class="badge badge-secondary">@req.RequestType</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-sm">
+                                @if (req.RequestType == SAWP.Web.Domain.RequestType.Leave && req.LeaveRequest != null)
+                                {
+                                    <div><strong>Nghỉ @req.LeaveRequest.TotalDays ngày:</strong> @req.LeaveRequest.StartDate.ToString("dd/MM/yyyy") &rarr; @req.LeaveRequest.EndDate.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted text-xs text-truncate" style="max-width: 250px;">Lý do: @req.LeaveRequest.Reason</div>
+                                }
+                                else if (req.RequestType == SAWP.Web.Domain.RequestType.ClassTransfer && req.ClassTransferDetail != null)
+                                {
+                                    <div>Chuyển từ lớp <strong>@req.ClassTransferDetail.CurrentClass?.Name</strong> sang <strong>@req.ClassTransferDetail.TargetClass?.Name</strong></div>
+                                    <div class="text-muted text-xs text-truncate" style="max-width: 250px;">Lý do: @req.ClassTransferDetail.Reason</div>
+                                }
+                                else if (req.RequestType == SAWP.Web.Domain.RequestType.DocumentIssuance && req.DocumentRequestDetail != null)
+                                {
+                                    <div>Loại: <strong>@req.DocumentRequestDetail.DocumentType</strong> (SL: @req.DocumentRequestDetail.Quantity)</div>
+                                    <div class="text-muted text-xs text-truncate" style="max-width: 250px;">Mục đích: @req.DocumentRequestDetail.Purpose</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Không có tóm tắt</span>
+                                }
+
+                                @if (!string.IsNullOrEmpty(req.RejectionReason))
+                                {
+                                    <div class="text-danger text-xs mt-1">
+                                        <strong>Lý do từ chối:</strong> @req.RejectionReason
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-sm">
+                                @req.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-sm">
+                                @switch (req.CurrentAssigneeRole)
+                                {
+                                    case "Teacher":
+                                        <span class="text-muted font-medium">GV Chủ nhiệm</span>
+                                        break;
+                                    case "Board":
+                                        <span class="text-warning font-semibold">Ban Giám hiệu</span>
+                                        break;
+                                    case "Office":
+                                        <span class="text-info font-medium">Giáo vụ</span>
+                                        break;
+                                    default:
+                                        <span class="text-muted">@(req.CurrentAssigneeRole ?? "—")</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @switch (req.Status)
+                                {
+                                    case SAWP.Web.Domain.RequestStatus.Submitted:
+                                        <span class="badge badge-info"><icon name="clock" /> Chờ duyệt</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.InReview:
+                                        <span class="badge badge-purple"><icon name="eye" /> Đang xem</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Escalated:
+                                        <span class="badge badge-warning"><icon name="arrow-up-circle" /> Chuyển BGH</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Approved:
+                                        <span class="badge badge-success"><icon name="check-circle" /> Đã duyệt</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Rejected:
+                                        <span class="badge badge-danger"><icon name="x-circle" /> Từ chối</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Cancelled:
+                                        <span class="badge badge-secondary"><icon name="slash" /> Đã hủy</span>
+                                        break;
+                                    case SAWP.Web.Domain.RequestStatus.Completed:
+                                        <span class="badge badge-success"><icon name="check-check" /> Đã cấp/xong</span>
+                                        break;
+                                    default:
+                                        <span class="badge">@req.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-right">
+                                <div class="d-flex justify-end gap-1">
+                                    @if (isCancellable)
+                                    {
+                                        <form method="post" asp-page-handler="Cancel" asp-route-id="@req.Id" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn này không? Thao tác này không thể hoàn tác (BR-36).');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-xs" title="Hủy đơn này">
+                                                <icon name="x" /> Hủy đơn
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

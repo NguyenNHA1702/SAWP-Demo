@@ -1,0 +1,141 @@
+@page
+@model ImportModel
+@{
+    ViewData["Title"] = "Nhập danh sách học sinh";
+    Layout = "_AppLayout";
+}
+
+<div class="page-head">
+    <div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+            <a href="/Office/Students/Index" style="font-size:0.85rem; color:var(--fg-muted);">Hồ sơ học sinh</a>
+            <span style="color:var(--fg-muted);">&rsaquo;</span>
+            <span style="font-size:0.85rem; font-weight:700;">Nhập danh sách</span>
+        </div>
+        <h1 class="page-title">Nhập danh sách học sinh hàng loạt (UC-09)</h1>
+        <div class="page-subtitle">Nhập nhanh từ tệp CSV/Excel danh sách học sinh đã trúng tuyển vào trường (BR-10)</div>
+    </div>
+</div>
+
+<div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Input Form Card -->
+    <div class="sticker-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <icon name="upload" shape="squircle" tone="violet" size="md" /> Dữ liệu danh sách (CSV / Bảng Excel)
+            </h3>
+            <span class="badge badge-slate">Định dạng CSV/TSV</span>
+        </div>
+
+        <div style="background-color: #F8FAFC; border: 1.5px dashed var(--border-dark); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem;">
+            <strong>Cấu trúc mỗi dòng:</strong> <code>Mã_HS, Họ_và_tên, Giới_tính (Nam/Nữ), Ngày_sinh (dd/MM/yyyy), Ngày_nhập_học, Nơi_sinh</code><br />
+            <em>Ví dụ:</em> <code>HS2601025, Nguyễn Văn Bình, Nam, 15/05/2020, 15/08/2026, Hà Nội</code>
+        </div>
+
+        <form method="post" asp-page-handler="Validate">
+            <div class="field">
+                <label class="field-label" for="csv">Dán dữ liệu hoặc chỉnh sửa nội dung bên dưới</label>
+                <textarea asp-for="CsvData" id="csv" class="textarea" style="min-height: 140px; font-family: monospace; font-size: 0.9rem;" required></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-candy btn-lg">
+                    <icon name="search" size="md" /> Kiểm tra hợp lệ dữ liệu (Validate)
+                </button>
+                <a href="/Office/Students/Index" class="btn btn-outline btn-lg">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Validation & Preview Results -->
+    @if (Model.IsPreview)
+    {
+        <div class="sticker-card" style="border-color: var(--accent-violet);">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">
+                        <icon name="check-circle" shape="squircle" tone="mint" size="md" /> Kết quả kiểm tra dữ liệu trước khi nhập
+                    </h3>
+                    <div style="font-size: 0.85rem; color: var(--fg-muted); margin-top: 0.25rem;">
+                        Hợp lệ: <strong style="color: #059669;">@Model.ValidRows.Count dòng</strong> · 
+                        Lỗi: <strong style="color: #E11D48;">@Model.InvalidRows.Count dòng</strong>
+                    </div>
+                </div>
+
+                @if (Model.ValidRows.Any())
+                {
+                    <form method="post" asp-page-handler="Commit" style="margin: 0;">
+                        <input type="hidden" asp-for="CsvData" />
+                        <button type="submit" class="btn btn-mint btn-lg">
+                            <icon name="check" size="md" /> Xác nhận nhập @Model.ValidRows.Count học sinh
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <!-- Valid Rows Table -->
+            @if (Model.ValidRows.Any())
+            {
+                <h4 style="font-size: 1.05rem; margin: 1.5rem 0 0.75rem; color: #059669;">
+                    ✓ Các dòng hợp lệ sẵn sàng thêm vào hệ thống:
+                </h4>
+                <div class="table-container">
+                    <table class="table-pop">
+                        <thead>
+                            <tr>
+                                <th>Dòng</th>
+                                <th>Mã học sinh</th>
+                                <th>Họ và tên</th>
+                                <th>Giới tính</th>
+                                <th>Ngày sinh</th>
+                                <th>Nơi sinh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.ValidRows)
+                            {
+                                <tr>
+                                    <td>#@row.RowIndex</td>
+                                    <td><code>@row.StudentCode</code></td>
+                                    <td><strong>@row.FullName</strong></td>
+                                    <td>@(row.Gender == Gender.Male ? "Nam" : "Nữ")</td>
+                                    <td>@Model.FormatDate(row.DateOfBirth)</td>
+                                    <td>@(row.PlaceOfBirth ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <!-- Invalid Rows Table -->
+            @if (Model.InvalidRows.Any())
+            {
+                <h4 style="font-size: 1.05rem; margin: 1.5rem 0 0.75rem; color: #E11D48;">
+                    ✕ Các dòng lỗi sẽ bị bỏ qua (MSG49):
+                </h4>
+                <div class="table-container">
+                    <table class="table-pop">
+                        <thead>
+                            <tr>
+                                <th>Dòng</th>
+                                <th>Mã HS / Họ tên</th>
+                                <th>Lý do không hợp lệ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.InvalidRows)
+                            {
+                                <tr style="background-color: #FFF1F2;">
+                                    <td>#@row.RowIndex</td>
+                                    <td>@row.StudentCode @row.FullName</td>
+                                    <td style="color: #E11D48; font-weight: 600;">@row.ErrorMessage</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
